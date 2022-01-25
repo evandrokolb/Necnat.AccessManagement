@@ -1,0 +1,274 @@
+﻿@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<FeatureLocalizer> FeatureLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<ModuleLocalizer> ModuleLocalizer
+@inject IStringLocalizer<ControllerLocalizer> ControllerLocalizer
+@inject IStringLocalizer<ApiLocalizer> ApiLocalizer
+@inject INecnatSessionService Session
+@inject INecnatSwalService SwalService
+
+@inject NavigationManager Navigation
+@inject DialogService Dialog
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+@if (hasPermissionRead)
+{
+    @if (isLoading == true)
+    {
+        <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+    }
+    else
+    {
+        <RadzenPanel class="nn-filter" AllowCollapse="true">
+            <HeaderTemplate>
+                <span>
+                    <i class="fas fa-link"></i><span class="nn-filter-header">@ApiLocalizer["Apis"]</span>
+                </span>
+            </HeaderTemplate>
+            <ChildContent>
+                <hr />
+                <RadzenDataGrid class="nn-data-grid" AllowColumnResize="true" AllowSorting="true" AllowPaging="true" EmptyText="@CommonLocalizer["No records to display."]"
+                                AllowFiltering="true" FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                PageSize="PageSize" IsLoading="@(recordList == null)" TItem="FeatureApi" Data="@recordList">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="FeatureApi" Property="Api.Controller.Module.ApplicationId" Title="@ApplicationLocalizer["Application"]">
+                            <Template Context="data">
+                                <div>@ApplicationList.Where(x => x.Id == ModuleList.Where(x => x.Id == ControllerList.Where(x => x.Id == data.Api.ControllerId).First().ModuleId).First().ApplicationId).First().Name</div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="FeatureApi" Property="Api.Controller.ModuleId" Title="@ModuleLocalizer["Module"]">
+                            <Template Context="data">
+                                <div>@ModuleList.Where(x => x.Id == ControllerList.Where(x => x.Id == data.Api.ControllerId).First().ModuleId).First().Name</div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="FeatureApi" Property="Api.ControllerId" Title="@ControllerLocalizer["Controller"]">
+                            <Template Context="data">
+                                <div>@ControllerList.Where(x => x.Id == data.Api.ControllerId).First().Name</div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="FeatureApi" Property="Api.HttpMethodId" Title="@ApiLocalizer["HttpMethodId"]">
+                            <Template Context="data">
+                                <div>@httpMethodList.Where(x => x.Id == data.Api.HttpMethodId).First().Name</div>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn CssClass="nn-column" TItem="FeatureApi" Property="Api.Name" Title="@ApiLocalizer["Name"]" />
+                        <RadzenDataGridColumn CssClass="nn-column" TItem="FeatureApi" Property="Api.Version" Title="@ApiLocalizer["Version"]" />
+                        <RadzenDataGridColumn CssClass="nn-column" TItem="FeatureApi" Property="Api.IsActive" Title="@ApiLocalizer["IsActive"]">
+                            <Template Context="data">
+                                <RadzenCheckBox class="nn-checkbox" @bind-Value="data.Api.IsActive" Disabled="true" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        @if (AllowDelete && hasPermissionDelete)
+                        {
+                            <RadzenDataGridColumn TItem="FeatureApi" Title="Ação">
+                                <Template Context="data">
+                                    <button type='button' class="btn nn-button-action nn-button-delete" @onclick="async () => await ConfirmDeleteFeatureApiAsync(data.Id)" data-toggle="tooltip" title="@CommonLocalizer["Delete"]"><i class="fas fa-trash-alt"></i></button>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+                    </Columns>
+                </RadzenDataGrid>
+                <br />
+                @if (AllowInsert && hasPermissionInsert)
+                {
+                    <button type='button' class="btn float-right nn-button nn-button-primary nn-button-new" @onclick="@InsertFeatureApi"><i class="fas fa-plus-circle nn-button-icon"></i> @CommonLocalizer["Add"]</button>
+                }
+            </ChildContent>
+        </RadzenPanel>
+    }
+}
+
+@code {
+
+    //DataGrid Parameters
+
+    [Parameter]
+    public int PageSize { get; set; } = 5;
+
+    //Parameters
+
+    [Parameter]
+    public int FeatureId { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+    List<FeatureApi> recordList;
+
+    List<Necnat.Shared.Domains.HttpMethod> httpMethodList = HttpMethodDomain.GetAll();
+
+    //Permission
+
+    [Parameter]
+    public bool AllowInsert { get; set; }
+
+    [Parameter]
+    public bool AllowDelete { get; set; }
+
+    private MdUserAuthorizationReduced userAuthorization = null;
+    private bool hasPermissionInsert = false;
+    private bool hasPermissionRead = false;
+    private bool hasPermissionDelete = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dialog.OnClose += CloseInsertFeatureApi;
+
+        userAuthorization = await Session.GetUserAuthorizationAsync();
+        if (userAuthorization == null)
+        {
+            Navigation.NavigateTo("/MdlAccessManagement/Logout?reason=NoUserAuthorization");
+            return;
+        }
+
+        await OnInitializedSupportAsync();
+
+        hasPermissionRead = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureApiRead, (int)NamHierarchyComponentTypeConstants.Application, ApplicationId);
+        hasPermissionInsert = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureApiInsert, (int)NamHierarchyComponentTypeConstants.Application, ApplicationId);
+        hasPermissionDelete = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureApiDelete, (int)NamHierarchyComponentTypeConstants.Application, ApplicationId);
+
+        if (!hasPermissionRead)
+            return;
+
+        recordList = await (await AppHttpClient.DevelopmentFeatureApiASearchByFeatureIdIncludeApi(FeatureId)).Content.ReadFromJsonAsync<List<FeatureApi>>();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    string insertFeatureApiByFeature = "InsertFeatureApiByFeature";
+
+    void InsertFeatureApi()
+    {
+        Dialog.Open<ApiSelectModal>("", new Dictionary<string, object>() {
+                { "DialogName", insertFeatureApiByFeature },
+                { "SupportModuleCodeName", NamFeatureConstants.ModuleDevelopment },
+                { "SupportFeatureCodeName", NamFeatureConstants.FeatureDevelopmentFeatureApiInsert },
+                { "WithoutIdList", recordList.Select(x => x.ApiId).ToList() },
+                { "IsMultipleSelection", true } },
+            RadzenConstants.DIALOG_OPTIONS);
+    }
+
+    async void CloseInsertFeatureApi(dynamic result)
+    {
+        if (result == null || ((MdDialogResult)result).DialogName != insertFeatureApiByFeature)
+            return;
+
+        var isSuccessStatusCode = true;
+        string successMessage = string.Empty;
+        List<Api> apiList = result.Data;
+
+        foreach (var iApi in apiList)
+        {
+            var e = new FeatureApi();
+            e.FeatureId = FeatureId;
+            e.ApiId = iApi.Id;
+
+            var r = await AppHttpClient.DevelopmentFeatureApiAInsert(e);
+
+            isSuccessStatusCode = isSuccessStatusCode && r.IsSuccessStatusCode;
+            if (isSuccessStatusCode)
+                successMessage = await r.Content.ReadAsStringAsync();
+
+            if (!isSuccessStatusCode)
+            {
+                if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                    await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+                else
+                    await Swal.FireAsync(SwalService.ErrorGeneric());
+            }
+
+            if (!isSuccessStatusCode)
+                break;
+        }
+
+        if (apiList.Count() > 0 && isSuccessStatusCode)
+            await Swal.FireAsync(SwalService.Success(successMessage));
+
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+    async Task ConfirmDeleteFeatureApiAsync(int id)
+    {
+        await Swal.FireAsync(SwalService.WarningConfirmAction(new PreConfirmCallback(async () => await DeleteFeatureApiAsync(id), this)))
+            .ContinueWith(async swalTask =>
+            {
+                SweetAlertResult result = await swalTask;
+                if (result.Dismiss == DismissReason.Cancel)
+                    await Swal.FireAsync(SwalService.WarningConfirmActionCanceled());
+            });
+    }
+
+    async Task<string> DeleteFeatureApiAsync(int id)
+    {
+        var result = "0";
+        var r = await AppHttpClient.DevelopmentFeatureApiADelete(id);
+
+        if (r.IsSuccessStatusCode)
+        {
+            await Swal.FireAsync(SwalService.Success(await r.Content.ReadAsStringAsync()));
+            result = "1";
+        }
+        else if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+            await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+        else
+            await Swal.FireAsync(SwalService.ErrorGeneric());
+
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        return result;
+    }
+
+    #region Support
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+
+    [Parameter]
+    public List<Module> ModuleList { get; set; }
+
+    [Parameter]
+    public List<Controller> ControllerList { get; set; }
+
+    [Parameter]
+    public int ApplicationId { get; set; }
+
+    [Parameter]
+    public int ModuleId { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureApiRead));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ModuleList == null)
+        {
+            ModuleList = await ResponseUtil.DataOfFilterObject<List<Module>>(await AppHttpClient.DevelopmentModuleAFilterSupport(NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureApiRead));
+            ModuleList = ModuleList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ControllerList == null)
+        {
+            ControllerList = await ResponseUtil.DataOfFilterObject<List<Controller>>(await AppHttpClient.DevelopmentControllerAFilterSupport(NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureApiRead));
+            ControllerList = ControllerList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ApplicationId == 0)
+        {
+            if (ModuleId == 0)
+            {
+                var feature = await (await AppHttpClient.DevelopmentFeatureAGetById(FeatureId)).Content.ReadFromJsonAsync<Feature>();
+                ModuleId = feature.ModuleId;
+            }
+
+            ApplicationId = ModuleList.Where(x => x.Id == ModuleId).First().ApplicationId;
+        }
+    }
+
+    #endregion
+
+}

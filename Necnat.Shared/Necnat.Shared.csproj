@@ -1,0 +1,193 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="5.0.10" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\CommonApiLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CommonApiLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\CommonLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CommonLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\ApiLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ApiLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\ApplicationLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ApplicationLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\ControllerLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ControllerLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\FeatureLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FeatureLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\HierarchicalStructureLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>HierarchicalStructureLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\HierarchyComponentTypeLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>HierarchyComponentTypeLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\HierarchyLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>HierarchyLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\ModuleLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ModuleLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\RoleLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>RoleLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\SecurityLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SecurityLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Entities\UserLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UserLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\SwalLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SwalLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Validators\CommonValidatorLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CommonValidatorLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Validators\DateTimeValidatorLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DateTimeValidatorLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Validators\IntegerValidatorLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>IntegerValidatorLocalizer.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Resources\Validators\StringValidatorLocalizer.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>StringValidatorLocalizer.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\CommonApiLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CommonApiLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\CommonLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CommonLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\ApiLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ApiLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\ApplicationLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ApplicationLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\ControllerLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ControllerLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\FeatureLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>FeatureLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\HierarchicalStructureLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>HierarchicalStructureLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\HierarchyComponentTypeLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>HierarchyComponentTypeLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\HierarchyLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>HierarchyLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\ModuleLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ModuleLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\RoleLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>RoleLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\SecurityLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>SecurityLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Entities\UserLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>UserLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SwalLocalizer.pt-BR.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SwalLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>SwalLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Validators\CommonValidatorLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CommonValidatorLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Validators\DateTimeValidatorLocalizer.pt-BR.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Validators\DateTimeValidatorLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>DateTimeValidatorLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Validators\IntegerValidatorLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>IntegerValidatorLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Validators\StringValidatorLocalizer.pt-BR.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Validators\StringValidatorLocalizer.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>StringValidatorLocalizer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,125 @@
+﻿@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<UserLocalizer> UserLocalizer
+@inject INecnatSwalService SwalService
+
+@inject DialogService Dialog
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+<div class="row">
+    <div class="col-md-12">
+        @if (SelectedRecord.HierarchicalStructure.Hierarchy != null)
+        {
+            <RadzenTextBox Style="width: calc(33% - 37px);" @bind-Value="SelectedRecord.HierarchicalStructure.Hierarchy.Name" Disabled="true" />
+        }
+        @if (SelectedRecord.HierarchyComponent.HierarchyComponentType != null)
+        {
+            <RadzenTextBox Style="width: calc(33% - 37px);" @bind-Value="SelectedRecord.HierarchyComponent.HierarchyComponentType.Name" Disabled="true" />
+        }
+        @if (SelectedRecord.HierarchyComponent != null)
+        {
+            <RadzenTextBox Style="width: calc(33% - 37px);" @bind-Value="SelectedRecord.HierarchyComponent.Name" Disabled="true" />
+        }
+        <button type='button' class='btn float-right nn-mini-button nn-line-button nn-button-secondary nn-button-mini-clear' @onclick="@(async () => await ClearAsync())"><i class="fas fa-broom"></i></button>
+        <button type='button' class='btn float-right nn-mini-button nn-line-button nn-button-primary nn-button-mini-search' @onclick="@ModalSearch" disabled="@(SelectedRecordId != null)"><i class="fas fa-search"></i></button>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public MdHierarchicalStructureTree SelectedRecord { get; set; }
+
+    [Parameter]
+    public EventCallback<MdHierarchicalStructureTree> SelectedRecordChanged { get; set; }
+
+    [Parameter]
+    public int? SelectedRecordId { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> SelectedRecordIdChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dialog.OnClose += CloseModalSearch;
+
+        if (SelectedRecord != null)
+            SelectedRecordId = SelectedRecord.HierarchicalStructure.Id;
+
+        if (SelectedRecordId != null)
+        {
+            SelectedRecord = new MdHierarchicalStructureTree();
+            SelectedRecord.HierarchicalStructure = new HierarchicalStructure();
+            SelectedRecord.HierarchicalStructure.Hierarchy = new Hierarchy();
+            SelectedRecord.HierarchyComponent = new MdViewHierarchyComponent();
+            SelectedRecord.HierarchyComponent.HierarchyComponentType = new HierarchyComponentType();
+
+            await SearchByIdAsync();
+        }
+        else
+            await ClearAsync();
+    }
+
+    async Task ClearAsync(bool clearVr = true)
+    {
+        SelectedRecord = new MdHierarchicalStructureTree();
+        SelectedRecord.HierarchicalStructure = new HierarchicalStructure();
+        SelectedRecord.HierarchicalStructure.Hierarchy = new Hierarchy();
+        SelectedRecord.HierarchyComponent = new MdViewHierarchyComponent();
+        SelectedRecord.HierarchyComponent.HierarchyComponentType = new HierarchyComponentType();
+        await SelectedRecordChanged.InvokeAsync(SelectedRecord);
+
+        SelectedRecordId = null;
+        await SelectedRecordIdChanged.InvokeAsync(SelectedRecordId);
+
+        StateHasChanged();
+    }
+
+    string searchHierarchicalStructure = "SearchHierarchicalStructure";
+
+    void ModalSearch()
+    {
+        Dialog.Open<HierarchicalStructureSelectModal>("", new Dictionary<string, object>() {
+                { "DialogName", searchHierarchicalStructure },
+                { "IsMultipleSelection", false } },
+                RadzenConstants.DIALOG_OPTIONS);
+    }
+
+    async void CloseModalSearch(dynamic result)
+    {
+        if (result == null || ((MdDialogResult)result).DialogName != searchHierarchicalStructure)
+            return;
+
+        MdHierarchicalStructureTree data = result.Data;
+
+        SelectedRecord = data;
+        await SelectedRecordChanged.InvokeAsync(SelectedRecord);
+
+        SelectedRecordId = SelectedRecord.HierarchicalStructure.Id;
+        await SelectedRecordIdChanged.InvokeAsync(SelectedRecordId);
+
+        StateHasChanged();
+    }
+
+    async Task SearchByIdAsync()
+    {
+        if (SelectedRecordId == null)
+            return;
+
+        var r = await AppHttpClient.HierarchyManagementHierarchicalStructureASearchTreeById((int)SelectedRecordId);
+
+        if (r.IsSuccessStatusCode)
+        {
+            SelectedRecord = await r.Content.ReadFromJsonAsync<MdHierarchicalStructureTree>();
+            await SelectedRecordChanged.InvokeAsync(SelectedRecord);
+        }
+        else if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+            await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+        else
+            await Swal.FireAsync(SwalService.ErrorGeneric());
+
+        StateHasChanged();
+    }
+
+}

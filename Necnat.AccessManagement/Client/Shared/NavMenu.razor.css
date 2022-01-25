@@ -1,0 +1,42 @@
+.navbar-toggler {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+}
+
+.navbar-brand-img {
+    max-width: 180px;
+}
+
+.fa, .fas {
+    width: 2rem;
+    font-size: 1.1rem;
+    vertical-align: text-top;
+    top: -2px;
+}
+
+@media (min-width: 641px) {
+    .navbar-toggler {
+        display: none;
+    }
+
+    .collapse {
+        /* Never collapse the sidebar for wide screens */
+        display: block;
+    }
+}
+
+footer {
+    padding: 10px;
+    background: var(--color-1);
+}
+
+@media (min-width: 767.98px) {
+    footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+    }
+}

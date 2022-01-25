@@ -1,0 +1,353 @@
+﻿@using Necnat.AccessManagement.Client.Components.Modules.MdlHierarchyManagement
+@using Necnat.Shared.Filters
+
+@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<UserLocalizer> UserLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<RoleLocalizer> RoleLocalizer
+@inject IStringLocalizer<HierarchicalStructureLocalizer> HierarchicalStructureLocalizer
+@inject IStringLocalizer<HierarchyLocalizer> HierarchyLocalizer
+@inject IStringLocalizer<HierarchyComponentTypeLocalizer> HierarchyComponentTypeLocalizer
+@inject IStringLocalizer<SecurityLocalizer> SecurityLocalizer
+@inject INecnatSwalService SwalService
+
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+@if (isLoading == true)
+{
+    <img class="nn-loading nn-loading-center" src="../images/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <RadzenPanel class="nn-filter" AllowCollapse="true">
+        <HeaderTemplate>
+            <span>
+                <i class="fas fa-filter"></i><a class="nn-filter-header">@CommonLocalizer["{0} Filters", SecurityLocalizer["Security"]]</a>
+            </span>
+        </HeaderTemplate>
+        <ChildContent>
+            <hr />
+            <RadzenTemplateForm Data="@filter" Submit="@(async (MdSecurityFilter args) => { await FilterAsync(true); })">
+                <div class="row">
+                    <div class="col-md-4">
+                        <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Application"]" />
+                        <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                        Placeholder="@CommonLocalizer["Select"]" Data="@ApplicationList" ValueProperty="Id" TextProperty="Name" @bind-Value="filter.ApplicationIdFilter" Change="@ChangeApplicationId" Disabled="@disableApplicationId" />
+                    </div>
+                    <div class="col-md-4">
+                        <RadzenLabel class="nn-label" Text="@RoleLocalizer["Role"]" />
+                        <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                        Placeholder="@CommonLocalizer["Select"]" Data="@filteredRoleList" ValueProperty="Id" TextProperty="Name" @bind-Value="filter.RoleIdFilter" Disabled="@disableRoleId" />
+                    </div>
+                    <div class="col-md-2">
+                        <RadzenLabel class="nn-label" Text="@SecurityLocalizer["IsActive"]" />
+                        <RadzenCheckBox class="nn-checkbox" TriState="true" @bind-Value="filter.IsActiveFilter" Disabled="@disableIsActive" />
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-md-12">
+                        <RadzenLabel class="nn-label" Text="@UserLocalizer["User"]" />
+                        <UserSelectInput @bind-SelectedRecordId="filter.UserIdFilter" />
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-md-12">
+                        <RadzenLabel class="nn-label" Text="@HierarchicalStructureLocalizer["HierarchicalStructure"]" />
+                        <HierarchicalStructureSelectInput @bind-SelectedRecordId="filter.HierarchicalStructureIdFilter" />
+                    </div>
+                </div>
+                <br />
+                <button type="submit" class="btn float-right nn-button nn-button-primary nn-button-search"><i class="fas fa-search nn-button-icon"></i>@CommonLocalizer["Search"]</button>
+                <button type="button" class="btn float-right nn-button nn-button-secondary nn-button-clear" @onclick="@Clear"><i class="fas fa-broom nn-button-icon"></i>@CommonLocalizer["Clear"]</button>
+            </RadzenTemplateForm>
+        </ChildContent>
+    </RadzenPanel>
+    <br />
+    if (!refreshDataGrid)
+    {
+        <RadzenDataGrid class="nn-data-grid" AllowColumnResize="true" AllowSorting="true" AllowPaging="true" EmptyText="@CommonLocalizer["No records to display."]"
+                        AllowFiltering="@(!filter.IsPaging)" FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        PageSize="PageSize" IsLoading="(RecordList == null)" LoadData="@(filter.IsPaging ? LoadData : null)" Count="count" TItem="MdViewSecurity" Data="@RecordList"
+                        SelectionMode="@(IsMultipleSelection ? DataGridSelectionMode.Multiple : DataGridSelectionMode.Single)" Value="@SelectedRecordList" ValueChanged="@SelectedRecordListChanged">
+            <Columns>
+                @if (ShowSelectionColumn && IsMultipleSelection)
+                {
+                    <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Width="40px" Sortable="false" Filterable="false">
+                        <HeaderTemplate>
+                            <RadzenCheckBox TriState="false" TValue="bool" Value="@(SelectedRecordList != null && SelectedRecordList.Count > 0)" Change="@SelectAll" />
+                        </HeaderTemplate>
+                        <Template Context="data">
+                            <RadzenCheckBox TriState="false" Disabled="true" Value="@(SelectedRecordList != null && SelectedRecordList.Contains(data))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                }
+                else if (ShowSelectionColumn)
+                {
+                    <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Width="40px" Sortable="false" Filterable="false">
+                        <Template Context="data">
+                            <RadzenCheckBox TriState="false" Disabled="true" Value="@(SelectedRecordList != null && SelectedRecordList.Contains(data))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                }
+                <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Property="UserName" Title="@UserLocalizer["User"]" />
+                <RadzenDataGridColumn TItem="MdViewSecurity" Property="Security.Role.ApplicationId" Title="@ApplicationLocalizer["Application"]">
+                    <Template Context="data">
+                        <div>@ApplicationList.Where(x => x.Id == RoleList.Where(x => x.Id == data.Security.RoleId).First().ApplicationId).First().Name</div>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="MdViewSecurity" Property="Security.RoleId" Title="@RoleLocalizer["Role"]">
+                    <Template Context="data">
+                        <div>@RoleList.Where(x => x.Id == data.Security.RoleId).First().Name</div>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Property="HierarchyName" Title="@HierarchyLocalizer["Hierarchy"]" />
+                <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Property="HierarchyComponentTypeName" Title="@HierarchyComponentTypeLocalizer["HierarchyComponentType"]" />
+                <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Property="HierarchyComponentName" Title="@HierarchicalStructureLocalizer["HierarchyComponent"]" />
+                <RadzenDataGridColumn CssClass="nn-column" TItem="MdViewSecurity" Property="IsActive" Title="@SecurityLocalizer["IsActive"]">
+                    <Template Context="data">
+                        <RadzenCheckBox class="nn-checkbox" @bind-Value="data.Security.IsActive" Disabled="true" />
+                    </Template>
+                </RadzenDataGridColumn>
+                @ChildContent
+            </Columns>
+        </RadzenDataGrid>
+    }
+}
+
+@code {
+
+    //Component Parameters
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    //DataGrid Parameters
+
+    [Parameter]
+    public bool LoadOnInit { get; set; } = false;
+
+    [Parameter]
+    public bool IsPaging { get; set; } = true;
+
+    [Parameter]
+    public int PageSize { get; set; } = 10;
+
+    //Parameters
+
+    [Parameter]
+    public List<MdViewSecurity> RecordList { get; set; }
+
+    [Parameter]
+    public EventCallback<List<MdViewSecurity>> RecordListChanged { get; set; }
+
+    [Parameter]
+    public bool ShowSelectionColumn { get; set; } = false;
+
+    [Parameter]
+    public bool IsMultipleSelection { get; set; } = false;
+
+    [Parameter]
+    public IList<MdViewSecurity> SelectedRecordList { get; set; }
+
+    [Parameter]
+    public EventCallback<IList<MdViewSecurity>> SelectedRecordListChanged { get; set; }
+
+    [Parameter]
+    public List<int> WithoutIdList { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+    bool refreshDataGrid = false;
+    MdSecurityFilter filter = new MdSecurityFilter();
+    int count = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        OnInitializedPredefined();
+
+        filter.IsPaging = IsPaging;
+        filter.Take = (int)PageSize;
+        filter.WithoutIdList = WithoutIdList;
+
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+
+        if (LoadOnInit)
+        {
+            if (!filter.IsPaging)
+                await FilterAsync();
+        }
+        else
+        {
+            RecordList = new List<MdViewSecurity>() { };
+            await RecordListChanged.InvokeAsync(RecordList);
+            StateHasChanged();
+        }
+    }
+
+    async Task LoadData(LoadDataArgs args)
+    {
+        filter.Skip = args.Skip == null ? 0 : (int)args.Skip;
+        filter.Take = args.Top == null ? (int)PageSize : (int)args.Top;
+        filter.OrderBy = args.OrderBy;
+
+        await FilterAsync();
+    }
+
+    public async Task FilterAsync(bool clearPagination = false)
+    {
+        if (clearPagination)
+        {
+            refreshDataGrid = true;
+            filter.Skip = 0;
+        }
+
+        RecordList = null;
+        await RecordListChanged.InvokeAsync(RecordList);
+        StateHasChanged();
+
+        var r = await AppHttpClient.AccessManagementSecurityAFilter(SupportModuleCodeName, SupportFeatureCodeName, filter);
+        if (r.IsSuccessStatusCode)
+        {
+            var fo = JsonConvert.DeserializeObject<MdFilterObject>(await r.Content.ReadAsStringAsync());
+            RecordList = JsonConvert.DeserializeObject<List<MdViewSecurity>>(fo.Data.ToString());
+            count = fo.Total;
+        }
+        else
+        {
+            RecordList = new List<MdViewSecurity>();
+            count = 0;
+
+            if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+            else
+                await Swal.FireAsync(SwalService.ErrorGeneric());
+        }
+
+        if (SelectedRecordList != null && SelectedRecordList.Count > 0 && filter.IsPaging)
+            SelectedRecordList = JsonUtil.RemakeSelectedRecordList(RecordList, SelectedRecordList.ToList());
+
+        if (clearPagination)
+            refreshDataGrid = false;
+
+        await RecordListChanged.InvokeAsync(RecordList);
+        StateHasChanged();
+    }
+
+    public async Task Clear()
+    {
+        filter = JsonUtil.Clone(PredefinedFilter);
+        filter.IsPaging = IsPaging;
+        filter.Take = PageSize;
+        filter.WithoutIdList = WithoutIdList;
+
+        await OnInitializedSupportAsync();
+
+        RecordList = new List<MdViewSecurity>();
+        count = 0;
+
+        await RecordListChanged.InvokeAsync(RecordList);
+        StateHasChanged();
+    }
+
+    public async Task SelectAll()
+    {
+        if (SelectedRecordList != null && SelectedRecordList.Count > 0)
+        {
+            SelectedRecordList = new List<MdViewSecurity>();
+            return;
+        }
+
+        if (IsMultipleSelection)
+        {
+            if (filter.IsPaging && count > PageSize)
+            {
+                filter.IsPaging = false;
+                await FilterAsync(false);
+            }
+
+            SelectedRecordList = RecordList;
+        }
+    }
+
+    #region Predefined
+
+    [Parameter]
+    public MdSecurityFilter PredefinedFilter { get; set; } = new MdSecurityFilter();
+
+    bool disableUserId;
+    bool disableApplicationId;
+    bool disableRoleId;
+    bool disableHierarchicalStructureId;
+    bool disableIsActive;
+
+    void OnInitializedPredefined()
+    {
+        filter = JsonUtil.Clone(PredefinedFilter);
+
+        disableUserId = !string.IsNullOrWhiteSpace(PredefinedFilter.UserIdFilter);
+        disableApplicationId = PredefinedFilter.ApplicationIdFilter != null;
+        disableRoleId = PredefinedFilter.RoleIdFilter != null;
+        disableHierarchicalStructureId = PredefinedFilter.HierarchicalStructureIdFilter != null;
+        disableIsActive = PredefinedFilter.IsActiveFilter != null;
+    }
+
+    #endregion
+
+    #region Support
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; }
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; }
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+
+    [Parameter]
+    public List<Role> RoleList { get; set; }
+    List<Role> filteredRoleList { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (RoleList == null)
+        {
+            RoleList = await ResponseUtil.DataOfFilterObject<List<Role>>(await AppHttpClient.AccessConfigurationRoleAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            RoleList = RoleList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (PredefinedFilter.RoleIdFilter != null)
+            PredefinedFilter.ApplicationIdFilter = RoleList.Where(x => x.Id == PredefinedFilter.RoleIdFilter).First().ApplicationId;
+
+        ChangeApplicationId();
+    }
+
+    void ChangeApplicationId()
+    {
+        if (PredefinedFilter.RoleIdFilter == null)
+        {
+            disableRoleId = filter.ApplicationIdFilter == null;
+
+            filteredRoleList = RoleList.Where(x => x.ApplicationId == filter.ApplicationIdFilter).OrderBy(x => x.Id).ToList();
+            filter.RoleIdFilter = null;
+
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+}

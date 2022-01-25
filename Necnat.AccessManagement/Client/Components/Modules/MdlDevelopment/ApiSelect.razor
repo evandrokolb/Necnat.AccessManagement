@@ -1,0 +1,410 @@
+﻿@using Necnat.Shared.Filters
+
+@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<ModuleLocalizer> ModuleLocalizer
+@inject IStringLocalizer<ControllerLocalizer> ControllerLocalizer
+@inject IStringLocalizer<ApiLocalizer> ApiLocalizer
+@inject INecnatSwalService SwalService
+
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+@if (isLoading == true)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <RadzenPanel class="nn-filter" AllowCollapse="true">
+        <HeaderTemplate>
+            <span>
+                <i class="fas fa-filter"></i><span class="nn-filter-header">@CommonLocalizer["{0} Filters", ApiLocalizer["Api"]]</span>
+            </span>
+        </HeaderTemplate>
+        <ChildContent>
+            <hr />
+            <RadzenTemplateForm Data="@filter" Submit="@(async (MdApiFilter args) => { await FilterAsync(true); })">
+                <div class="row">
+                    <div class="col-md-4">
+                        <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Application"]" />
+                        <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                        Placeholder="@CommonLocalizer["Select"]" Data="@ApplicationList" ValueProperty="Id" TextProperty="Name" @bind-Value="filter.ApplicationIdFilter" Change="@ChangeApplicationId" Disabled="@disableApplicationId" />
+                    </div>
+                    <div class="col-md-4">
+                        <RadzenLabel class="nn-label" Text="@ModuleLocalizer["Module"]" />
+                        <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                        Placeholder="@CommonLocalizer["Select"]" Data="@filteredModuleList" ValueProperty="Id" TextProperty="Name" @bind-Value="filter.ModuleIdFilter" Change="@ChangeModuleId" Disabled="@disableModuleId" />
+                    </div>
+                    <div class="col-md-4">
+                        <RadzenLabel class="nn-label" Text="@ControllerLocalizer["Controller"]" />
+                        <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                        Placeholder="@CommonLocalizer["Select"]" Data="@filteredControllerList" ValueProperty="Id" TextProperty="Name" @bind-Value="filter.ControllerIdFilter" Disabled="@disableControllerId" />
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-md-10">
+                        <RadzenLabel class="nn-label" Text="@ApiLocalizer["Name"]" />
+                        <RadzenTextBox class="nn-input" @bind-Value="filter.NameFilter" Disabled="@disableName" />
+                    </div>
+                    <div class="col-md-2">
+                        <RadzenLabel class="nn-label" Text="@ApiLocalizer["IsActive"]" />
+                        <RadzenCheckBox class="nn-checkbox" TriState="true" @bind-Value="filter.IsActiveFilter" Disabled="@disableIsActive" />
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-md-4">
+                        <RadzenLabel class="nn-label" Text="@ApiLocalizer["HttpMethodId"]" />
+                        <RadzenDropDown class="nn-input" AllowClear="true" TValue="int?" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true"
+                                        Placeholder="@CommonLocalizer["Select"]" Data="@httpMethodList" @bind-Value='@filter.HttpMethodIdFilter' ValueProperty="Id" TextProperty="Name" Disabled="@disableHttpMethodId" />
+                    </div>
+                    <div class="col-md-6">
+                        <RadzenLabel class="nn-label" Text="@ApiLocalizer["Version"]" />
+                        <RadzenTextBox class="nn-input" @bind-Value="filter.VersionFilter" Disabled="@disableVersion" />
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-md-12">
+                        <RadzenLabel class="nn-label" Text="@ApiLocalizer["Description"]" />
+                        <RadzenTextArea class="nn-input" @bind-Value="filter.DescriptionFilter" Disabled="@disableDescription" />
+                    </div>
+                </div>
+                <br />
+                <button type="submit" class="btn float-right nn-button nn-button-primary nn-button-search"><i class="fas fa-search nn-button-icon"></i>@CommonLocalizer["Search"]</button>
+                <button type="button" class="btn float-right nn-button nn-button-secondary nn-button-clear" @onclick="@Clear"><i class="fas fa-broom nn-button-icon"></i>@CommonLocalizer["Clear"]</button>
+            </RadzenTemplateForm>
+        </ChildContent>
+    </RadzenPanel>
+    <br />
+    if (!refreshDataGrid)
+    {
+        <RadzenDataGrid class="nn-data-grid" AllowColumnResize="true" AllowSorting="true" AllowPaging="true" EmptyText="@CommonLocalizer["No records to display."]"
+                        AllowFiltering="@(!filter.IsPaging)" FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        PageSize="PageSize" IsLoading="(RecordList == null)" LoadData="@(filter.IsPaging ? LoadData : null)" Count="count" TItem="Api" Data="@RecordList"
+                        SelectionMode="@(IsMultipleSelection ? DataGridSelectionMode.Multiple : DataGridSelectionMode.Single)" Value="@SelectedRecordList" ValueChanged="@SelectedRecordListChanged">
+            <Columns>
+                @if (ShowSelectionColumn && IsMultipleSelection)
+                {
+                    <RadzenDataGridColumn CssClass="nn-column" TItem="Api" Width="40px" Sortable="false" Filterable="false">
+                        <HeaderTemplate>
+                            <RadzenCheckBox TriState="false" TValue="bool" Value="@(SelectedRecordList != null && SelectedRecordList.Count > 0)" Change="@SelectAll" />
+                        </HeaderTemplate>
+                        <Template Context="data">
+                            <RadzenCheckBox TriState="false" Disabled="true" Value="@(SelectedRecordList != null && SelectedRecordList.Contains(data))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                }
+                else if (ShowSelectionColumn)
+                {
+                    <RadzenDataGridColumn CssClass="nn-column" TItem="Api" Width="40px" Sortable="false" Filterable="false">
+                        <Template Context="data">
+                            <RadzenCheckBox TriState="false" Disabled="true" Value="@(SelectedRecordList != null && SelectedRecordList.Contains(data))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                }
+                <RadzenDataGridColumn TItem="Api" Property="Controller.Module.ApplicationId" Title="@ApplicationLocalizer["Application"]">
+                    <Template Context="data">
+                        <div>@ApplicationList.Where(x => x.Id == ModuleList.Where(x => x.Id == ControllerList.Where(x => x.Id == data.ControllerId).First().ModuleId).First().ApplicationId).First().Name</div>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Api" Property="Controller.ModuleId" Title="@ModuleLocalizer["Module"]">
+                    <Template Context="data">
+                        <div>@ModuleList.Where(x => x.Id == ControllerList.Where(x => x.Id == data.ControllerId).First().ModuleId).First().Name</div>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Api" Property="ControllerId" Title="@ControllerLocalizer["Controller"]">
+                    <Template Context="data">
+                        <div>@ControllerList.Where(x => x.Id == data.ControllerId).First().Name</div>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Api" Property="HttpMethodId" Title="@ApiLocalizer["HttpMethodId"]">
+                    <Template Context="data">
+                        <div>@httpMethodList.Where(x => x.Id == data.HttpMethodId).First().Name</div>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn CssClass="nn-column" TItem="Api" Property="Name" Title="@ApiLocalizer["Name"]" />
+                <RadzenDataGridColumn CssClass="nn-column" TItem="Api" Property="Version" Title="@ApiLocalizer["Version"]" />
+                <RadzenDataGridColumn CssClass="nn-column" TItem="Api" Property="IsActive" Title="@ApiLocalizer["IsActive"]">
+                    <Template Context="data">
+                        <RadzenCheckBox class="nn-checkbox" @bind-Value="data.IsActive" Disabled="true" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                @ChildContent
+            </Columns>
+        </RadzenDataGrid>
+    }
+}
+
+@code {
+
+    //Component Parameters
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    //DataGrid Parameters
+
+    [Parameter]
+    public bool LoadOnInit { get; set; } = false;
+
+    [Parameter]
+    public bool IsPaging { get; set; } = true;
+
+    [Parameter]
+    public int PageSize { get; set; } = 10;
+
+    //Parameters
+
+    [Parameter]
+    public List<Api> RecordList { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Api>> RecordListChanged { get; set; }
+
+    [Parameter]
+    public bool ShowSelectionColumn { get; set; } = false;
+
+    [Parameter]
+    public bool IsMultipleSelection { get; set; } = false;
+
+    [Parameter]
+    public IList<Api> SelectedRecordList { get; set; }
+
+    [Parameter]
+    public EventCallback<IList<Api>> SelectedRecordListChanged { get; set; }
+
+    [Parameter]
+    public List<int> WithoutIdList { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+    bool refreshDataGrid = false;
+    MdApiFilter filter = new MdApiFilter();
+    int count = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        OnInitializedPredefined();
+
+        filter.IsPaging = IsPaging;
+        filter.Take = (int)PageSize;
+        filter.WithoutIdList = WithoutIdList;
+
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+
+        if (LoadOnInit)
+        {
+            if (!filter.IsPaging)
+                await FilterAsync();
+        }
+        else
+        {
+            RecordList = new List<Api>() { };
+            await RecordListChanged.InvokeAsync(RecordList);
+            StateHasChanged();
+        }
+    }
+
+    async Task LoadData(LoadDataArgs args)
+    {
+        filter.Skip = args.Skip == null ? 0 : (int)args.Skip;
+        filter.Take = args.Top == null ? (int)PageSize : (int)args.Top;
+        filter.OrderBy = args.OrderBy;
+
+        await FilterAsync();
+    }
+
+    public async Task FilterAsync(bool clearPagination = false)
+    {
+        if (clearPagination)
+        {
+            refreshDataGrid = true;
+            filter.Skip = 0;
+        }
+
+        RecordList = null;
+        await RecordListChanged.InvokeAsync(RecordList);
+        StateHasChanged();
+
+        var r = await AppHttpClient.DevelopmentApiAFilter(SupportModuleCodeName, SupportFeatureCodeName, filter);
+        if (r.IsSuccessStatusCode)
+        {
+            var fo = JsonConvert.DeserializeObject<MdFilterObject>(await r.Content.ReadAsStringAsync());
+            RecordList = JsonConvert.DeserializeObject<List<Api>>(fo.Data.ToString());
+            count = fo.Total;
+        }
+        else
+        {
+            RecordList = new List<Api>();
+            count = 0;
+
+            if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+            else
+                await Swal.FireAsync(SwalService.ErrorGeneric());
+        }
+
+        if (SelectedRecordList != null && SelectedRecordList.Count > 0 && filter.IsPaging)
+            SelectedRecordList = JsonUtil.RemakeSelectedRecordList(RecordList, SelectedRecordList.ToList());
+
+        if (clearPagination)
+            refreshDataGrid = false;
+
+        await RecordListChanged.InvokeAsync(RecordList);
+        StateHasChanged();
+    }
+
+    public async Task Clear()
+    {
+        filter = JsonUtil.Clone(PredefinedFilter);
+        filter.IsPaging = IsPaging;
+        filter.Take = PageSize;
+        filter.WithoutIdList = WithoutIdList;
+
+        await OnInitializedSupportAsync();
+
+        RecordList = new List<Api>();
+        count = 0;
+
+        await RecordListChanged.InvokeAsync(RecordList);
+        StateHasChanged();
+    }
+
+    public async Task SelectAll()
+    {
+        if (SelectedRecordList != null && SelectedRecordList.Count > 0)
+        {
+            SelectedRecordList = new List<Api>();
+            return;
+        }
+
+        if (IsMultipleSelection)
+        {
+            if (filter.IsPaging && count > PageSize)
+            {
+                filter.IsPaging = false;
+                await FilterAsync(false);
+            }
+
+            SelectedRecordList = RecordList;
+        }
+    }
+
+    #region Predefined
+
+    [Parameter]
+    public MdApiFilter PredefinedFilter { get; set; } = new MdApiFilter();
+
+    bool disableApplicationId;
+    bool disableModuleId;
+    bool disableControllerId;
+    bool disableName;
+    bool disableHttpMethodId;
+    bool disableVersion;
+    bool disableDescription;
+    bool disableIsActive;
+
+    void OnInitializedPredefined()
+    {
+        filter = JsonUtil.Clone(PredefinedFilter);
+
+        disableApplicationId = PredefinedFilter.ApplicationIdFilter != null;
+        disableModuleId = PredefinedFilter.ModuleIdFilter != null;
+        disableControllerId = PredefinedFilter.ControllerIdFilter != null;
+        disableHttpMethodId = PredefinedFilter.HttpMethodIdFilter != null;
+        disableIsActive = PredefinedFilter.IsActiveFilter != null;
+        disableName = !string.IsNullOrWhiteSpace(PredefinedFilter.NameFilter);
+        disableVersion = !string.IsNullOrWhiteSpace(PredefinedFilter.VersionFilter);
+        disableDescription = !string.IsNullOrWhiteSpace(PredefinedFilter.DescriptionFilter);
+
+    }
+
+    #endregion
+
+    #region Support
+
+    List<Necnat.Shared.Domains.HttpMethod> httpMethodList = HttpMethodDomain.GetAll();
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; }
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; }
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+
+    [Parameter]
+    public List<Module> ModuleList { get; set; }
+    List<Module> filteredModuleList { get; set; }
+
+    [Parameter]
+    public List<Controller> ControllerList { get; set; }
+    List<Controller> filteredControllerList { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ModuleList == null)
+        {
+            ModuleList = await ResponseUtil.DataOfFilterObject<List<Module>>(await AppHttpClient.DevelopmentModuleAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ModuleList = ModuleList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ControllerList == null)
+        {
+            ControllerList = await ResponseUtil.DataOfFilterObject<List<Controller>>(await AppHttpClient.DevelopmentControllerAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ControllerList = ControllerList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (PredefinedFilter.ControllerIdFilter != null)
+            PredefinedFilter.ModuleIdFilter = ControllerList.Where(x => x.Id == PredefinedFilter.ControllerIdFilter).First().ModuleId;
+
+        if (PredefinedFilter.ModuleIdFilter != null)
+            PredefinedFilter.ApplicationIdFilter = ModuleList.Where(x => x.Id == PredefinedFilter.ModuleIdFilter).First().ApplicationId;
+
+        ChangeApplicationId();
+    }
+
+    void ChangeModuleId()
+    {
+        if (PredefinedFilter.ControllerIdFilter == null)
+        {
+            disableControllerId = filter.ModuleIdFilter == null;
+
+            filteredControllerList = ControllerList.Where(x => x.ModuleId == filter.ModuleIdFilter).OrderBy(x => x.Id).ToList();
+            filter.ControllerIdFilter = null;
+
+            StateHasChanged();
+        }
+    }
+
+    void ChangeApplicationId()
+    {
+        if (PredefinedFilter.ModuleIdFilter == null)
+        {
+            disableModuleId = filter.ApplicationIdFilter == null;
+
+            filteredModuleList = ModuleList.Where(x => x.ApplicationId == filter.ApplicationIdFilter).OrderBy(x => x.Id).ToList();
+            filter.ModuleIdFilter = null;
+
+            ChangeModuleId();
+        }
+    }
+
+    #endregion
+}

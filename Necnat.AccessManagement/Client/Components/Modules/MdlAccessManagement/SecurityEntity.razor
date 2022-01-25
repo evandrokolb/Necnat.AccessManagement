@@ -1,0 +1,236 @@
+﻿@using Necnat.AccessManagement.Client.Components.Modules.MdlHierarchyManagement
+@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<UserLocalizer> UserLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<RoleLocalizer> RoleLocalizer
+@inject IStringLocalizer<HierarchicalStructureLocalizer> HierarchicalStructureLocalizer
+@inject IStringLocalizer<SecurityLocalizer> SecurityLocalizer
+
+@inject NamHttpClient AppHttpClient
+@inject StringValidator StringValidator
+@inject IntegerValidator IntegerValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../images/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <div class="row">
+        @if (Entity.Role != null)
+        {
+            <div class="col-md-4">
+                <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Application"]" />
+                <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Placeholder="@CommonLocalizer["Select"]" Data="@filteredApplicationList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.Role.ApplicationId" Change="@ChangeApplicationId" Disabled="@AllDisabled" />
+            </div>
+        }
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@RoleLocalizer["Role"]" />
+            <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Placeholder="@CommonLocalizer["Select"]" Data="@filteredRoleList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.RoleId" Disabled="@AllDisabled" />
+        </div>
+        <div class="col-md-2">
+            <RadzenLabel class="nn-label" Text="@SecurityLocalizer["IsActive"]" />
+            <RadzenCheckBox class="nn-checkbox" @bind-Value="Entity.IsActive" Disabled="@AllDisabled" />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenLabel class="nn-label" Text="@UserLocalizer["User"]" />
+            <UserSelectInput @bind-SelectedRecordId="UserId" />
+        </div>
+        @if (!string.IsNullOrWhiteSpace(vrUserId.Message))
+        {
+            <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                @vrUserId.Message
+            </div>
+        }
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenLabel class="nn-label" Text="@HierarchicalStructureLocalizer["HierarchicalStructure"]" />
+            <HierarchicalStructureSelectInput @bind-SelectedRecordId="HierarchicalStructureId" />
+        </div>
+        @if (!string.IsNullOrWhiteSpace(vrHierarchicalStructureId.Message))
+        {
+            <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                @vrHierarchicalStructureId.Message
+            </div>
+        }
+    </div>
+    <br />
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public Security Entity { get; set; }
+
+    [Parameter]
+    public EventCallback<Security> EntityChanged { get; set; }
+
+    [Parameter]
+    public bool AllDisabled { get; set; }
+
+    public string UserId
+    {
+        get { return Entity.UserId; }
+        set
+        {
+            ValidateUserIdAsync(value).Wait();
+            Entity.UserId = value;
+        }
+    }
+
+    public int? HierarchicalStructureId
+    {
+        get { return Entity.HierarchicalStructureId; }
+        set
+        {
+            ValidateHierarchicalStructureIdAsync(value).Wait();
+            Entity.HierarchicalStructureId = value;
+        }
+    }
+
+    //Code
+
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+
+        await OnValidatorInitializedAsync();
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateUserIdAsync(Entity.UserId);
+        await ValidateHierarchicalStructureIdAsync(Entity.HierarchicalStructureId);
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrUserId.IsValid;
+        valid = valid && vrHierarchicalStructureId.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrUserId = new MdValidatorResult();
+    async Task ValidateUserIdAsync(string userId)
+    {
+        var field = UserLocalizer["User"];
+        vrUserId.IsValid = true;
+
+        if (vrUserId.IsValid)
+            vrUserId = StringValidator.FromDataAnnotation(userId, field, typeof(Security), "UserId");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrHierarchicalStructureId = new MdValidatorResult();
+    async Task ValidateHierarchicalStructureIdAsync(int? hierarchicalStructureId)
+    {
+        var field = HierarchicalStructureLocalizer["HierarchicalStructure"];
+        vrHierarchicalStructureId.IsValid = true;
+
+        if (vrHierarchicalStructureId.IsValid)
+            vrHierarchicalStructureId = IntegerValidator.Required(hierarchicalStructureId, field);
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Support
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; }
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; }
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+    List<Application> filteredApplicationList { get; set; }
+
+    [Parameter]
+    public List<Role> RoleList { get; set; }
+    List<Role> filteredRoleList { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (RoleList == null)
+        {
+            RoleList = await ResponseUtil.DataOfFilterObject<List<Role>>(await AppHttpClient.AccessConfigurationRoleAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            RoleList = RoleList.OrderBy(x => x.Name).ToList();
+        }
+
+        filteredApplicationList = ApplicationList.Where(x => RoleList.Select(x => x.ApplicationId).Contains(x.Id)).ToList();
+
+        if (Entity.RoleId != 0)
+        {
+            Entity.Role.ApplicationId = RoleList.Where(x => x.Id == Entity.RoleId).First().ApplicationId;
+            filteredRoleList = RoleList.Where(x => x.ApplicationId == Entity.Role.ApplicationId).OrderBy(x => x.Id).ToList();
+        }
+        else if (Entity.Role.ApplicationId != 0)
+        {
+            ChangeApplicationId();
+        }
+        else
+        {
+            Entity.Role.ApplicationId = filteredApplicationList.First().Id;
+            ChangeApplicationId();
+        }
+
+        StateHasChanged();
+    }
+
+    void ChangeApplicationId()
+    {
+        filteredRoleList = RoleList.Where(x => x.ApplicationId == Entity.Role.ApplicationId).OrderBy(x => x.Id).ToList();
+
+        if (filteredRoleList.FirstOrDefault() != null)
+            Entity.RoleId = filteredRoleList.First().Id;
+        else
+            Entity.RoleId = 0;
+
+        StateHasChanged();
+    }
+
+    #endregion
+}

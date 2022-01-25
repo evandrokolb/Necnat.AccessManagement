@@ -1,0 +1,181 @@
+﻿@page "/MdlHierarchyManagement/HierarchyMaintain"
+
+@using Necnat.AccessManagement.Client.Components.Modules.MdlHierarchyManagement
+
+@attribute [Authorize]
+
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<HierarchyLocalizer> HierarchyLocalizer
+@inject INecnatSessionService Session
+@inject INecnatSwalService SwalService
+
+@inject NavigationManager Navigation
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+    <RadzenDialog />
+<div class="nn-page-title nn-pt1"><i class="fab fa-dev"></i> @HierarchyLocalizer["Hierarchy"]</div>
+@if (pageType == 'I')
+{
+    <div class="nn-page-title nn-pt2"> @CommonLocalizer["New {0}", HierarchyLocalizer["Hierarchy"]]</div>
+}
+else if (pageType == 'U')
+{
+    <div class="nn-page-title nn-pt2"> @CommonLocalizer["Edit {0}", HierarchyLocalizer["Hierarchy"]]</div>
+}
+else
+{
+    <div class="nn-page-title nn-pt2"> @CommonLocalizer["View {0}", HierarchyLocalizer["Hierarchy"]]</div>
+}
+<br />
+@if (isLoading == true)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <RadzenTemplateForm Data="@entity" Submit="@(async (Hierarchy args) => { await Save(args); })">
+        <HierarchyEntity @bind-Entity="entity" @bind-IsValidEntity="isValidEntity" AllDisabled="@(pageType == 'R')" />
+        <br />
+        @if (pageType != 'R')
+        {
+            <button type="submit" class="btn float-right nn-button nn-button-primary nn-button-save"><i class="fas fa-save"></i> @CommonLocalizer["Save"]</button>
+        }
+    </RadzenTemplateForm>
+    @if (entity.Id != 0)
+    {
+        <br />
+        <br />
+        <br />
+        if (Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyHierarchyComponentTypeRead, (int)NamHierarchyComponentTypeConstants.Hierarchy, entity.Id))
+        {
+            <HierarchyHierarchyComponentTypeManyMany HierarchyId="entity.Id"
+                                          AllowInsert="@(pageType == 'U')" AllowDelete="@(pageType == 'U')" />
+        }
+    }
+    <br />
+    <button class="btn nn-button nn-button-back" @onclick="@Back"><i class="fas fa-arrow-alt-circle-left"></i> @CommonLocalizer["Back"]</button>
+}
+<br />
+<br />
+
+@code {
+
+    //Code
+
+    private bool isLoading = true;
+    private char pageType;
+    private Hierarchy entity;
+    private bool isValidEntity;
+
+    //Permission
+
+    private MdUserAuthorizationReduced userAuthorization = null;
+    private bool hasPermissionInsert = false;
+    private bool hasPermissionRead = false;
+    private bool hasPermissionUpdate = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userAuthorization = await Session.GetUserAuthorizationAsync();
+        if (userAuthorization == null)
+        {
+            Navigation.NavigateTo("/MdlAccessManagement/Logout?reason=NoUserAuthorization");
+            return;
+        }
+
+        hasPermissionRead = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyRead);
+        hasPermissionInsert = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyInsert);
+        hasPermissionUpdate = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyUpdate);
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var id))
+        {
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("pageType", out var pType))
+                pageType = pType.First() == "U" ? 'U' : 'R';
+            else
+                pageType = 'R';
+
+            if (pageType == 'U' && (!hasPermissionUpdate))
+            {
+                Navigation.NavigateTo("/MdlAccessManagement/Unauthorized?withoutPermission=" + NamFeatureConstants.FeatureHierarchyManagementHierarchyUpdate.Replace(".", "_"));
+                return;
+            }
+            else if (!hasPermissionRead)
+            {
+                Navigation.NavigateTo("/MdlAccessManagement/Unauthorized?withoutPermission=" + NamFeatureConstants.FeatureHierarchyManagementHierarchyRead.Replace(".", "_"));
+                return;
+            }
+
+            var r = await AppHttpClient.HierarchyManagementHierarchyAGetById(int.Parse(id));
+            if (r.IsSuccessStatusCode)
+                entity = await r.Content.ReadFromJsonAsync<Hierarchy>();
+            else
+            {
+                entity = new Hierarchy();
+
+                if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                    await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+                else
+                    await Swal.FireAsync(SwalService.ErrorGeneric());
+
+                await Back();
+            }
+        }
+        else
+        {
+            pageType = 'I';
+
+            if (pageType == 'I' && (!hasPermissionInsert))
+            {
+                Navigation.NavigateTo("/MdlAccessManagement/Unauthorized?withoutPermission=" + NamFeatureConstants.FeatureHierarchyManagementHierarchyInsert.Replace(".", "_"));
+                return;
+            }
+
+            entity = new Hierarchy();
+            entity.IsActive = true;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    #region Actions
+
+    async Task Save(Hierarchy e)
+    {
+        if (isValidEntity)
+        {
+            e = EntityUtil.SetEntityNotSealedTypePropertiesToNull(e);
+
+            HttpResponseMessage r;
+            if (e.Id == 0)
+            {
+                r = await AppHttpClient.HierarchyManagementHierarchyInsertAndAddToHierarchyHierarchies(e);
+            }
+            else
+                r = await AppHttpClient.HierarchyManagementHierarchyAUpdate(e);
+
+            if (r.IsSuccessStatusCode)
+            {
+                await Swal.FireAsync(SwalService.Success((e.Id == 0 ? await ResponseUtil.MessageOf(r) : await r.Content.ReadAsStringAsync()).ToString()));
+                await Back();
+            }
+            else if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+            else
+                await Swal.FireAsync(SwalService.ErrorGeneric());
+        }
+        else
+            await Swal.FireAsync(SwalService.WarningInvalidFields());
+    }
+
+    async Task Back()
+    {
+        await JSRuntime.InvokeVoidAsync("backButton.goBack");
+    }
+
+    #endregion
+}

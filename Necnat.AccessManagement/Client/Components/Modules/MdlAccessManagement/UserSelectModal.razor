@@ -1,0 +1,36 @@
+﻿@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+
+@inject DialogService DialogService
+
+<UserSelect LoadOnInit="LoadOnInit" IsPaging="IsPaging" ShowSelectionColumn="ShowSelectionColumn" IsMultipleSelection="IsMultipleSelection" @bind-SelectedRecordList="selectedRecordList" WithoutIdList="WithoutIdList"></UserSelect>
+<br />
+<div class="row">
+    <div class="col-md-12">
+        <button type='button' class='btn float-right nn-button nn-button-primary' style='margin-right: 5px' @onclick="@((args) => DialogService.Close(new MdDialogResult() { DialogName = DialogName, Data = (IsMultipleSelection ? selectedRecordList : selectedRecordList.First()) }))" disabled="@(selectedRecordList == null || selectedRecordList.Count < 1)">@CommonLocalizer["Pick"]</button>
+        <button type='button' class='btn float-right nn-button nn-button-secondary' style='margin-right: 5px' @onclick="@((args) => DialogService.Close(null))">@CommonLocalizer["Cancel"]</button>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public string DialogName { get; set; }
+
+    [Parameter]
+    public bool LoadOnInit { get; set; } = false;
+
+    [Parameter]
+    public bool IsPaging { get; set; } = true;
+
+    [Parameter]
+    public bool ShowSelectionColumn { get; set; } = true;
+
+    [Parameter]
+    public bool IsMultipleSelection { get; set; } = false;
+
+    [Parameter]
+    public List<string> WithoutIdList { get; set; }
+
+    IList<MdUser> selectedRecordList = new List<MdUser>();
+
+}

@@ -1,0 +1,44 @@
+﻿@using  System.Globalization
+
+@inject IJSRuntime JSRuntime
+
+@inject NavigationManager Navigation
+
+<div class="col-12 text-center">
+    <select class="form-control" @bind="Culture">
+        @foreach (var culture in supportedCultures)
+        {
+            <option value="@culture">@dictNativeName[culture.Name]</option>
+        }
+    </select>
+</div>
+
+@code
+{
+    Dictionary<string, string> dictNativeName = new Dictionary<string, string>
+{
+        { "en-US", "English (United States)"},
+        { "pt-BR", "Português (Brasil)"}
+    };
+
+    CultureInfo[] supportedCultures = new[]
+    {
+        new CultureInfo("en-US"),
+        new CultureInfo("pt-BR")
+    };
+
+    CultureInfo Culture
+    {
+        get => CultureInfo.CurrentCulture;
+        set
+        {
+            if (CultureInfo.CurrentCulture != value)
+            {
+                var js = (IJSInProcessRuntime)JSRuntime;
+                js.InvokeVoid("blazorCulture.set", value.Name);
+
+                Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+            }
+        }
+    }
+}

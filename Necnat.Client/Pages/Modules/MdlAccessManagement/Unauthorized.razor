@@ -1,0 +1,74 @@
+﻿@page "/MdlAccessManagement/Unauthorized"
+
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Localization
+@using Radzen.Blazor
+
+@inject IStringLocalizer<Unauthorized> Localizer
+
+@inject NavigationManager Navigation
+
+<div class="nn-page-title nn-pt1"><i class="fas fa-shield-alt"></i> @Localizer["Unauthorized"]</div>
+<br />
+<RadzenCard>
+    <div class="row">
+        <div class="col-12 text-center">
+            <h1>@Localizer["Unauthorized"]</h1>
+        </div>
+        <div class="col-12 text-center">
+            <br />
+            <i class="fas fa-shield-alt fa-10x"></i>
+        </div>
+        <div class="col-12 text-center">
+            <br />
+            <br />
+            <h2>@reason</h2>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(withoutPermissionModule))
+        {
+            <div class="col-12 text-center">
+                <h3><span class="font-weight-bold">@Localizer["Module"]:</span> @withoutPermissionModule</h3>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(withoutPermissionFeature))
+        {
+            <div class="col-12 text-center">
+                <h3><span class="font-weight-bold">@Localizer["Feature"]:</span> @withoutPermissionFeature</h3>
+            </div>
+        }
+    </div>
+</RadzenCard>
+
+@code {
+
+    string reason;
+    string withoutPermissionModule;
+    string withoutPermissionFeature;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("reason", out var pReason))
+        {
+            switch (pReason)
+            {
+                case "CannotGetUserAuthorization":
+                    reason = Localizer["Unable to get permissions from this user."];
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("withoutPermissionModule", out var pWithoutPermissionModule))
+        {
+            reason = Localizer["You don't have permission to perform this action."];
+            withoutPermissionModule = pWithoutPermissionModule;
+        }
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("withoutPermissionFeature", out var pWithoutPermissionFeature))
+            withoutPermissionFeature = pWithoutPermissionFeature;
+
+    }
+}

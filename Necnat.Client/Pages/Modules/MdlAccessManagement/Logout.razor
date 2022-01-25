@@ -1,0 +1,33 @@
+﻿@page "/MdlAccessManagement/Logout"
+
+@using Necnat.Client.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject SignOutSessionStateManager SignOutManager
+@inject NavigationManager Navigation
+@inject INecnatSessionService Session
+
+@code {
+
+    [CascadingParameter] Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.RemoveUserAuthorizationAsync();
+
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            await SignOutManager.SetSignOutState();
+            Navigation.NavigateTo("authentication/logout");
+        }
+        else
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+}

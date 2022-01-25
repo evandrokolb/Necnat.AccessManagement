@@ -1,0 +1,15 @@
+﻿@using Necnat.Client.Interfaces
+@using Microsoft.AspNetCore.Components.Web
+
+@inject NavigationManager Navigation
+@inject INecnatSessionService Session
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.RemoveUserAuthorizationAsync();
+        Navigation.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(Navigation.Uri)}");
+    }
+
+}

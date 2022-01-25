@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<IsPackable>true</IsPackable>
+		<LangVersion>8.0</LangVersion>
+
+		<RazorLangVersion>3.0</RazorLangVersion>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Blazored.LocalStorage" Version="4.1.5" />
+	  <PackageReference Include="CurrieTechnologies.Razor.SweetAlert2" Version="5.0.2" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="5.0.10" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.10" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="5.0.10" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.10" />
+	  <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+	  <PackageReference Include="Microsoft.Extensions.Localization" Version="5.0.10" />
+	  <PackageReference Include="Radzen.Blazor" Version="3.10.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Necnat.Shared\Necnat.Shared.csproj" />
+	</ItemGroup>
+
+</Project>

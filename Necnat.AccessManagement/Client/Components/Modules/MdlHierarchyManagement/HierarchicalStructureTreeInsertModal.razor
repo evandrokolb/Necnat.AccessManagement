@@ -1,0 +1,183 @@
+﻿@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<HierarchicalStructureLocalizer> HierarchicalStructureLocalizer
+@inject IStringLocalizer<HierarchyComponentTypeLocalizer> HierarchyComponentTypeLocalizer
+
+@inject DialogService DialogService
+@inject NamHttpClient AppHttpClient
+@inject IntegerValidator IntegerValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@HierarchyComponentTypeLocalizer["HierarchyComponentType"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="ParentHierarchyComponentTypeName" Disabled="true" />
+        </div>
+        <div class="col-md-8">
+            <RadzenLabel class="nn-label" Text="@HierarchicalStructureLocalizer["HierarchyComponent"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="ParentHierarchyComponentName" Disabled="true" />
+        </div>
+    </div>
+    <br />
+    <RadzenPanel class="nn-filter" AllowCollapse="true">
+        <HeaderTemplate>
+            <span>
+                <i class="fas fa-filter"></i><span class="nn-filter-header">@HierarchicalStructureLocalizer["Child"]</span>
+            </span>
+        </HeaderTemplate>
+        <ChildContent>
+            <hr />
+            <div class="row">
+                <div class="col-md-4">
+                    <RadzenLabel class="nn-label" Text="@HierarchyComponentTypeLocalizer["HierarchyComponentType"]" />
+                    <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                    Placeholder="@CommonLocalizer["Select"]" Data="@HierarchyComponentTypeList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.ComponentTypeId" Change="ChangeHierarchyComponentTypeId" />
+                    @if (!string.IsNullOrWhiteSpace(vrComponentTypeId.Message))
+                    {
+                        <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                            @vrComponentTypeId.Message
+                        </div>
+                    }
+                </div>
+                <div class="col-md-8">
+                    <RadzenLabel class="nn-label" Text="@HierarchicalStructureLocalizer["HierarchyComponent"]" />
+                    <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                    Placeholder="@CommonLocalizer["Select"]" Data="@filteredActiveHierarchyComponentList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.ComponentId" Disabled="disableHierarchyComponent" Change="async () => await ValidateComponentIdAsync(Entity.ComponentId)" />
+                    @if (!string.IsNullOrWhiteSpace(vrComponentId.Message))
+                    {
+                        <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                            @vrComponentId.Message
+                        </div>
+                    }
+                </div>
+            </div>
+        </ChildContent>
+    </RadzenPanel>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <button type='button' class='btn float-right nn-button nn-button-primary' style='margin-right: 5px' @onclick="@((args) => DialogService.Close(new MdDialogResult() { DialogName = DialogName, Data = Entity }))" disabled="@(!IsValidEntity)">@CommonLocalizer["Pick"]</button>
+            <button type='button' class='btn float-right nn-button nn-button-secondary' style='margin-right: 5px' @onclick="@((args) => DialogService.Close(null))">@CommonLocalizer["Cancel"]</button>
+        </div>
+    </div>
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public string DialogName { get; set; }
+
+    [Parameter]
+    public HierarchicalStructure Entity { get; set; }
+
+    [Parameter]
+    public int ParentHierarchyComponentTypeId { get; set; }
+
+    [Parameter]
+    public string ParentHierarchyComponentTypeName { get; set; }
+
+    [Parameter]
+    public int ParentHierarchyComponentId { get; set; }
+
+    [Parameter]
+    public string ParentHierarchyComponentName { get; set; }
+
+    [Parameter]
+    public List<HierarchyComponentType> HierarchyComponentTypeList { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+
+    List<MdViewHierarchyComponent> hierarchyComponentList { get; set; }
+    List<MdViewHierarchyComponent> filteredActiveHierarchyComponentList;
+    bool disableHierarchyComponent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnValidatorInitializedAsync();
+
+        HierarchyComponentTypeList = HierarchyComponentTypeList.OrderBy(x => x.Name).ToList();
+
+        hierarchyComponentList = await (await AppHttpClient.HierarchyManagementHierarchicalStructureASearchHierarchyComponentByHierarchyId(Entity.HierarchyId)).Content.ReadFromJsonAsync<List<MdViewHierarchyComponent>>();
+        hierarchyComponentList = hierarchyComponentList.OrderBy(x => x.Name).ToList();
+
+        await ChangeHierarchyComponentTypeId();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    async Task ChangeHierarchyComponentTypeId()
+    {
+        disableHierarchyComponent = Entity.ComponentTypeId == 0;
+        filteredActiveHierarchyComponentList = hierarchyComponentList.Where(x => x.HierarchyComponentTypeId == Entity.ComponentTypeId && x.IsActive).OrderBy(x => x.Id).ToList();
+
+        await ValidateComponentTypeIdAsync(Entity.ComponentTypeId);
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateComponentTypeIdAsync(Entity.ComponentTypeId);
+        await ValidateComponentIdAsync(Entity.Id);
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrComponentTypeId.IsValid;
+        valid = valid && vrComponentId.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrComponentTypeId = new MdValidatorResult();
+    async Task ValidateComponentTypeIdAsync(int hierarchyComponentTypeId)
+    {
+        var field = HierarchyComponentTypeLocalizer["HierarchyComponentType"];
+        vrComponentTypeId.IsValid = true;
+
+        if (vrComponentTypeId.IsValid)
+            vrComponentTypeId = IntegerValidator.NotNullNor0((int?)hierarchyComponentTypeId, field);
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrComponentId = new MdValidatorResult();
+    async Task ValidateComponentIdAsync(int id)
+    {
+        var field = HierarchicalStructureLocalizer["HierarchyComponent"];
+        vrComponentId.IsValid = true;
+
+        if (vrComponentId.IsValid)
+            vrComponentId = IntegerValidator.NotNullNor0(id, field);
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+}

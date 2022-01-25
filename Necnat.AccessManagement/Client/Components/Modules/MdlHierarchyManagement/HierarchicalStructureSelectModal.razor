@@ -1,0 +1,184 @@
+﻿@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<HierarchyLocalizer> HierarchyLocalizer
+@inject IStringLocalizer<HierarchicalStructureLocalizer> HierarchicalStructureLocalizer
+@inject INecnatSessionService Session
+@inject INecnatSwalService SwalService
+
+@inject DialogService DialogService
+@inject NavigationManager Navigation
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+@if (isLoading == true)
+{
+    <img class="nn-loading nn-loading-center" src="../images/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <RadzenPanel class="nn-filter" AllowCollapse="true">
+        <HeaderTemplate>
+            <span>
+                <i class="fas fa-filter"></i><a class="nn-filter-header">@CommonLocalizer["{0} Filters", HierarchicalStructureLocalizer["HierarchicalStructure"]]</a>
+            </span>
+        </HeaderTemplate>
+        <ChildContent>
+            <hr />
+            <div class="row">
+                <div class="col-md-4">
+                    <RadzenLabel class="nn-label" Text="@HierarchyLocalizer["Hierarchy"]" />
+                    <RadzenDropDown class="nn-input" AllowClear="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                    Placeholder="@CommonLocalizer["Select"]" Data="@HierarchyList" ValueProperty="Id" TextProperty="Name" @bind-Value="HierarchyId" Change="ChangeHierarchyId" />
+                </div>
+            </div>
+        </ChildContent>
+    </RadzenPanel>
+    <br />
+    @if (HierarchyId != 0)
+    {
+        @if (HierarchicalStructureTreeList == null)
+        {
+            <img class="nn-loading nn-loading-center" src="../images/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+        }
+        else
+        {
+            <HierarchicalStructureTreeSelect RecordId="HierarchicalStructureTreeList.Where(x => x.HierarchicalStructure.ParentHierarchicalStructureId == null).Select(x => x.HierarchicalStructure.Id).First()" RecordList="HierarchicalStructureTreeList" SelectedIdList="_selectedIdList" OnChangeEventCallback="@OnChange"
+                                             HierarchyComponentTypeList="HierarchyList.Where(x => x.Id == HierarchyId).First().HierarchyHierarchyComponentTypeList.Select(x => x.HierarchyComponentType).ToList()"></HierarchicalStructureTreeSelect>
+        }
+    }
+}
+<br />
+<div class="row">
+    <div class="col-md-12">
+        <button type='button' class='btn float-right nn-button nn-button-primary' style='margin-right: 5px' @onclick="@((args) => DialogService.Close(new MdDialogResult() { DialogName = DialogName, Data = (IsMultipleSelection ? GetSelectedRecordList() : GetSelectedRecordList().First()) }))" disabled="@(_selectedIdList == null || _selectedIdList.Count < 1)">@CommonLocalizer["Pick"]</button>
+        <button type='button' class='btn float-right nn-button nn-button-secondary' style='margin-right: 5px' @onclick="@((args) => DialogService.Close(null))">@CommonLocalizer["Cancel"]</button>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public string DialogName { get; set; }
+
+    [Parameter]
+    public bool LoadOnInit { get; set; } = false;
+
+    [Parameter]
+    public bool IsPaging { get; set; } = true;
+
+    [Parameter]
+    public bool IsMultipleSelection { get; set; } = false;
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; } = NamFeatureConstants.ModuleHierarchyManagement;
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; } = NamFeatureConstants.FeatureHierarchyManagementHierarchicalStructureRead;
+
+    private List<int> _selectedIdList = new List<int>();
+
+    //Code
+
+    private bool isLoading = true;
+    public List<MdHierarchicalStructureTree> HierarchicalStructureTreeList { get; set; }
+
+    public int HierarchyId { get; set; }
+    public List<Hierarchy> HierarchyList { get; set; }
+
+    //Permission
+
+    private MdUserAuthorizationReduced userAuthorization = null;
+    private bool hasPermissionRead = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userAuthorization = await Session.GetUserAuthorizationAsync();
+        if (userAuthorization == null)
+        {
+            Navigation.NavigateTo("/MdlAccessManagement/Logout?reason=NoUserAuthorization");
+            return;
+        }
+
+        hasPermissionRead = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchicalStructureRead);
+
+        if (!hasPermissionRead)
+        {
+            Navigation.NavigateTo("/MdlAccessManagement/Unauthorized?withoutPermissionModule=" + NamFeatureConstants.ModuleHierarchyManagement + "&withoutPermissionFeature=" + NamFeatureConstants.FeatureHierarchyManagementHierarchicalStructureRead);
+            return;
+        }
+
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    async Task ChangeHierarchyId()
+    {
+        _selectedIdList = new List<int>();
+        HierarchicalStructureTreeList = null;
+        StateHasChanged();
+
+        if (HierarchyId == 0)
+            return;
+
+        var md = new MdSearchTree();
+        md.HierarchyId = HierarchyId;
+        md.SearchTreeAllowedList.Add(new MdSearchTreeAllowed { Id = 1, ModuleCodeName = NamFeatureConstants.ModuleHierarchyManagement, FeatureCodeName = NamFeatureConstants.FeatureHierarchyManagementHierarchicalStructureRead });
+
+        var r = await AppHttpClient.HierarchyManagementHierarchicalStructureASearchTree(md);
+
+        if (r.IsSuccessStatusCode)
+        {
+            HierarchicalStructureTreeList = await r.Content.ReadFromJsonAsync<List<MdHierarchicalStructureTree>>();
+            StateHasChanged();
+        }
+        else if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+            await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+        else
+            await Swal.FireAsync(SwalService.ErrorGeneric());
+    }
+
+    public List<MdHierarchicalStructureTree> GetSelectedRecordList()
+    {
+        if (HierarchicalStructureTreeList == null)
+            return new List<MdHierarchicalStructureTree>();
+
+        var l = HierarchicalStructureTreeList.Where(x => _selectedIdList.Contains(x.HierarchicalStructure.Id)).ToList();
+
+        foreach (var iHierarchicalStructureTree in l)
+        {
+            iHierarchicalStructureTree.HierarchicalStructure.Hierarchy = new Hierarchy();
+            iHierarchicalStructureTree.HierarchicalStructure.Hierarchy = HierarchyList.Where(x => x.Id == HierarchyId).First();
+            iHierarchicalStructureTree.HierarchicalStructure.HierarchyId = HierarchyId;
+        }
+
+        return l;
+    }
+
+    #region DropDown
+
+    async Task OnInitializedSupportAsync()
+    {
+        HierarchyList = await (await AppHttpClient.HierarchyManagementHierarchicalStructureASearchHierarchyForTree()).Content.ReadFromJsonAsync<List<Hierarchy>>();
+        HierarchyList = HierarchyList.OrderBy(x => x.Name).ToList();
+    }
+
+    #endregion
+
+    void OnChange(int recordId)
+    {
+        if (_selectedIdList.Contains(recordId))
+            _selectedIdList.Remove(recordId);
+        else if ((!IsMultipleSelection) && _selectedIdList.Count > 0)
+        {
+            _selectedIdList = new List<int>();
+            _selectedIdList.Add(recordId);
+        }
+        else
+            _selectedIdList.Add(recordId);
+
+        StateHasChanged();
+    }
+
+}

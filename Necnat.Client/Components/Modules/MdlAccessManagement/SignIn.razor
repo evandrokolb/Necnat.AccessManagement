@@ -1,0 +1,22 @@
+﻿@using Necnat.Client.Interfaces
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+
+@inject IStringLocalizer<SignIn> Localizer
+
+@inject NavigationManager Navigation
+@inject INecnatSessionService Session
+
+<div class="nn-login-container">
+    <button class="btn btn-outline-success nn-button nn-login-button" @onclick="async () => await BeginSignIn()"><span class="fas fa-sign-in-alt" style="margin-top: 2px;" aria-hidden="true"></span> @Localizer["Sign In"]</button>
+</div>
+
+@code {
+
+    private async Task BeginSignIn()
+    {
+        await Session.RemoveUserAuthorizationAsync();
+        Navigation.NavigateTo("/authentication/login");
+    }
+
+}

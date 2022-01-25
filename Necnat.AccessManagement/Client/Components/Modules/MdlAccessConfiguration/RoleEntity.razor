@@ -1,0 +1,188 @@
+﻿@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<RoleLocalizer> RoleLocalizer
+
+@inject NamHttpClient AppHttpClient
+@inject StringValidator StringValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Application"]" />
+            <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Data="@ApplicationList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.ApplicationId" Disabled="@AllDisabled" />
+        </div>
+        <div class="col-md-2">
+            <RadzenLabel class="nn-label" Text="@RoleLocalizer["IsActive"]" />
+            <RadzenCheckBox class="nn-checkbox" @bind-Value="Entity.IsActive" Disabled="@AllDisabled" />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-6">
+            <RadzenLabel class="nn-label" Text="@RoleLocalizer["Name"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="Entity.Name" @oninput="@(async args => await ValidateNameAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrName.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrName.Message
+                </div>
+            }
+        </div>
+        <div class="col-md-6">
+            <RadzenLabel class="nn-label" Text="@RoleLocalizer["CodeName"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="Entity.CodeName" @oninput="@(async args => await ValidateCodeNameAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrCodeName.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrCodeName.Message
+                </div>
+            }
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenLabel class="nn-label" Text="@RoleLocalizer["Description"]" />
+            <RadzenTextArea class="nn-input" @bind-Value="Entity.Description" @oninput="@(async args => await ValidateDescriptionAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrDescription.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrDescription.Message
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public Role Entity { get; set; }
+
+    [Parameter]
+    public EventCallback<Role> EntityChanged { get; set; }
+
+    [Parameter]
+    public bool AllDisabled { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+
+        await OnValidatorInitializedAsync();
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateNameAsync(Entity.Name);
+        await ValidateCodeNameAsync(Entity.CodeName);
+        await ValidateDescriptionAsync(Entity.Description);
+
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrName.IsValid;
+        valid = valid && vrCodeName.IsValid;
+        valid = valid && vrDescription.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrName = new MdValidatorResult();
+    async Task ValidateNameAsync(string name)
+    {
+        var field = RoleLocalizer["Name"];
+        vrName.IsValid = true;
+
+        if (vrName.IsValid)
+            vrName = StringValidator.FromDataAnnotation(name, field, typeof(Role), "Name");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrCodeName = new MdValidatorResult();
+    async Task ValidateCodeNameAsync(string codeName)
+    {
+        var field = RoleLocalizer["CodeName"];
+        vrCodeName.IsValid = true;
+
+        if (vrCodeName.IsValid)
+            vrCodeName = StringValidator.FromDataAnnotation(codeName, field, typeof(Role), "CodeName");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrDescription = new MdValidatorResult();
+    async Task ValidateDescriptionAsync(string description)
+    {
+        var field = RoleLocalizer["Description"];
+        vrDescription.IsValid = true;
+
+        if (vrDescription.IsValid)
+            vrDescription = StringValidator.FromDataAnnotation(description, field, typeof(Role), "Description");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Support
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; }
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; }
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        Entity.ApplicationId = ApplicationList.First().Id;
+    }
+
+    #endregion
+}

@@ -1,0 +1,73 @@
+﻿@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using Radzen
+@using Radzen.Blazor
+
+
+@inject IJSRuntime JSRuntime
+@inject IStringLocalizer<SignOut> Localizer
+
+@inject NavigationManager Navigation
+
+<div class="nn-login-container">
+    @if (_loading)
+    {
+        <img class="nn-hcenter" src="../img/loading.gif" alt="Loading..." />
+    }
+    else
+    {
+        <img src='@("https://www.gravatar.com/avatar/" + _emailHash + "?s=30")' class="nn-login-gravatar">
+        <div class="nn-login-name">@_preferreName</div>
+        <button class="btn btn-outline-danger nn-button nn-login-button" @onclick="BeginSignOut"><span class="fas fa-sign-out-alt" style="margin-top: 2px;" aria-hidden="true"></span> @Localizer["Sign Out"]</button>
+
+    }
+</div>
+
+@code {
+
+    private bool _loading = true;
+    private string _preferreName;
+    private string _email;
+    private string _emailHash;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await authenticationStateTask).User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var preferreNameClaim = user.Claims.Where(x => x.Type == "preferred_name").FirstOrDefault();
+            if (preferreNameClaim != null)
+                _preferreName = preferreNameClaim.Value;
+            else
+                _preferreName = "User";
+
+            var emailClaim = user.Claims.Where(x => x.Type == "email").FirstOrDefault();
+            if (emailClaim != null)
+                _email = emailClaim.Value;
+
+            else
+                _email = "MyEmailAddress@example.com";
+
+            _emailHash = await MD5(_email);
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private void BeginSignOut(MouseEventArgs args)
+    {
+        Navigation.NavigateTo("/MdlAccessManagement/Logout");
+    }
+
+    private async Task<string> MD5(string s)
+    {
+        return await JSRuntime.InvokeAsync<string>("md5", s);
+    }
+}

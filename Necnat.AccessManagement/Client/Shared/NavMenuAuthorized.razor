@@ -1,0 +1,235 @@
+﻿@inject IStringLocalizer<NavMenuAuthorized> Localizer
+
+@inject NavigationManager Navigation
+@inject INecnatSessionService Session
+
+@if (authorizationError)
+{
+    <li class="nav-item px-3">
+        <div style="cursor: pointer;">
+            <NavLink class="nav-link nn-nav-link">
+                <span class="fa fa-cog" aria-hidden="true"></span> @Localizer["Authorization Error"]
+            </NavLink>
+        </div>
+    </li>
+}
+@if (pMdlDevelopment)
+{
+    <li class="nav-item px-3">
+        <div class="@((expandMdlDevelopment ? "expand-link-container" : ""))">
+            <div style="cursor: pointer;" class="@((expandMdlDevelopment ? "expand-link-root" : ""))" @onclick="ToggleAuthorizedNavMenu">
+                <NavLink class="nav-link nn-nav-link" @onclick='() => Expand("expandMdlDevelopment")'>
+                    <span class="fab fa-dev" aria-hidden="true"></span> @Localizer["Development"]
+                </NavLink>
+            </div>
+            @if (expandMdlDevelopment)
+            {
+                @if (pMdlDevelopmentApplication)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlDevelopment/ApplicationSearch">
+                        <span>@Localizer["Application"]</span>
+                    </NavLink>
+                }
+                @if (pMdlDevelopmentModule)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlDevelopment/ModuleSearch">
+                        <span>@Localizer["Module"]</span>
+                    </NavLink>
+                }
+                @if (pMdlDevelopmentController)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlDevelopment/ControllerSearch">
+                        <span>@Localizer["Controller"]</span>
+                    </NavLink>
+                }
+                @if (pMdlDevelopmentApi)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlDevelopment/ApiSearch">
+                        <span>@Localizer["Api"]</span>
+                    </NavLink>
+                }
+                @if (pMdlDevelopmentFeature)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlDevelopment/FeatureSearch">
+                        <span>@Localizer["Feature"]</span>
+                    </NavLink>
+                }
+            }
+        </div>
+    </li>
+}
+@if (pMdlAccessConfiguration)
+{
+    <li class="nav-item px-3">
+        <div class="@((expandMdlAccessConfiguration ? "expand-link-container" : ""))">
+            <div style="cursor: pointer;" class="@((expandMdlAccessConfiguration ? "expand-link-root" : ""))" @onclick="ToggleAuthorizedNavMenu">
+                <NavLink class="nav-link nn-nav-link" @onclick='() => Expand("expandMdlAccessConfiguration")'>
+                    <span class="fa fa-cog" aria-hidden="true"></span> @Localizer["Access Configuration"]
+                </NavLink>
+            </div>
+            @if (expandMdlAccessConfiguration)
+            {
+                @if (pMdlAccessConfigurationRole)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlAccessConfiguration/RoleSearch">
+                        <span>@Localizer["Role"]</span>
+                    </NavLink>
+                }
+            }
+        </div>
+    </li>
+}
+@if (pMdlHierarchyManagement)
+{
+    <li class="nav-item px-3">
+        <div class="@((expandMdlHierarchyManagement ? "expand-link-container" : ""))">
+            <div style="cursor: pointer;" class="@((expandMdlHierarchyManagement ? "expand-link-root" : ""))" @onclick="ToggleAuthorizedNavMenu">
+                <NavLink class="nav-link nn-nav-link" @onclick='() => Expand("expandMdlHierarchyManagement")'>
+                    <span class="fas fa-sitemap" aria-hidden="true"></span> @Localizer["Hierarchy Management"]
+                </NavLink>
+            </div>
+            @if (expandMdlHierarchyManagement)
+            {
+                @if (pMdlHierarchyManagementHierarchy)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlHierarchyManagement/HierarchySearch">
+                        <span>@Localizer["Hierarchy"]</span>
+                    </NavLink>
+                }
+                @if (pMdlHierarchyManagementHierarchyComponentType)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlHierarchyManagement/HierarchyComponentTypeSearch">
+                        <span>@Localizer["Hierarchy Component Type"]</span>
+                    </NavLink>
+                }
+                @if (pMdlHierarchyManagementHierarchicalStructure)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlHierarchyManagement/HierarchicalStructureSearch">
+                        <span>@Localizer["Hierarchical Structure"]</span>
+                    </NavLink>
+                }
+            }
+        </div>
+    </li>
+}
+@if (pMdlAccessManagement)
+{
+    <li class="nav-item px-3">
+        <div class="@((expandMdlAccessManagement ? "expand-link-container" : ""))">
+            <div style="cursor: pointer;" class="@((expandMdlAccessManagement ? "expand-link-root" : ""))" @onclick="ToggleAuthorizedNavMenu">
+                <NavLink class="nav-link nn-nav-link" @onclick='() => Expand("expandMdlAccessManagement")'>
+                    <span class="fas fa-user-shield" aria-hidden="true"></span> @Localizer["Access Management"]
+                </NavLink>
+            </div>
+            @if (expandMdlAccessManagement)
+            {
+                @if (pMdlAccessManagementSecurity)
+                {
+                    <NavLink class="nav-link nn-nav-link-cascade" href="MdlAccessManagement/SecuritySearch">
+                        <span>@Localizer["Security"]</span>
+                    </NavLink>
+                }
+            }
+        </div>
+    </li>
+}
+
+@code {
+
+    [Parameter]
+    public bool CollapseNavMenu { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> CollapseNavMenuChanged { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    bool authorizationError;
+
+    bool pMdlDevelopment;
+    bool expandMdlDevelopment;
+    bool pMdlDevelopmentApplication;
+    bool pMdlDevelopmentModule;
+    bool pMdlDevelopmentController;
+    bool pMdlDevelopmentApi;
+    bool pMdlDevelopmentFeature;
+
+    bool pMdlAccessConfiguration;
+    bool expandMdlAccessConfiguration;
+    bool pMdlAccessConfigurationRole;
+
+    bool pMdlHierarchyManagement;
+    bool expandMdlHierarchyManagement;
+    bool pMdlHierarchyManagementHierarchy;
+    bool pMdlHierarchyManagementHierarchyComponentType;
+    bool pMdlHierarchyManagementHierarchicalStructure;
+
+    bool pMdlAccessManagement;
+    bool expandMdlAccessManagement;
+    bool pMdlAccessManagementSecurity;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await authenticationStateTask).User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var _userAuthorization = await Session.GetUserAuthorizationAsync();
+            if (_userAuthorization == null)
+            {
+                authorizationError = true;
+                return;
+            }
+
+            pMdlDevelopmentApplication = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentApplicationRead);
+            pMdlDevelopmentModule = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentModuleRead);
+            pMdlDevelopmentController = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentControllerRead);
+            pMdlDevelopmentApi = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentApiRead);
+            pMdlDevelopmentFeature = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleDevelopment, NamFeatureConstants.FeatureDevelopmentFeatureRead);
+            pMdlDevelopment = pMdlDevelopmentApplication || pMdlDevelopmentModule || pMdlDevelopmentController || pMdlDevelopmentApi || pMdlDevelopmentFeature;
+
+            pMdlAccessConfigurationRole = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleAccessConfiguration, NamFeatureConstants.FeatureAccessConfigurationRoleRead);
+            pMdlAccessConfiguration = pMdlAccessConfigurationRole;
+
+            pMdlHierarchyManagementHierarchy = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyRead);
+            pMdlHierarchyManagementHierarchyComponentType = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyComponentTypeRead);
+            pMdlHierarchyManagementHierarchicalStructure = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchicalStructureRead);
+            pMdlHierarchyManagement = pMdlHierarchyManagementHierarchy || pMdlHierarchyManagementHierarchyComponentType || pMdlHierarchyManagementHierarchicalStructure;
+
+            pMdlAccessManagementSecurity = Session.HasModuleFeature(_userAuthorization, NamFeatureConstants.ModuleAccessManagement, NamFeatureConstants.FeatureAccessManagementSecurityRead);
+            pMdlAccessManagement = pMdlAccessManagementSecurity;
+        }
+
+        StateHasChanged();
+    }
+
+    private void ToggleAuthorizedNavMenu()
+    {
+        CollapseNavMenu = !CollapseNavMenu;
+        StateHasChanged();
+    }
+
+    private void Expand(string expand)
+    {
+        if (expand == "expandMdlDevelopment")
+            expandMdlDevelopment = !expandMdlDevelopment;
+        else
+            expandMdlDevelopment = false;
+
+        if (expand == "expandMdlAccessConfiguration")
+            expandMdlAccessConfiguration = !expandMdlAccessConfiguration;
+        else
+            expandMdlAccessConfiguration = false;
+
+        if (expand == "expandMdlHierarchyManagement")
+            expandMdlHierarchyManagement = !expandMdlHierarchyManagement;
+        else
+            expandMdlHierarchyManagement = false;
+
+        if (expand == "expandMdlAccessManagement")
+            expandMdlAccessManagement = !expandMdlAccessManagement;
+        else
+            expandMdlAccessManagement = false;
+    }
+}

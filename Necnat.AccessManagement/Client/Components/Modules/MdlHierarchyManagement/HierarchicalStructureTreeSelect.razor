@@ -1,0 +1,58 @@
+﻿@inject INecnatSwalService SwalService
+
+@inject NavigationManager Navigation
+@inject DialogService Dialog
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+@if (_record.HierarchicalStructureTreeAllowedList.Where(x => x.Id == 1).First().IsAllowed)
+{
+    <RadzenCheckBox class="nn-mini-checkbox" TValue="bool" Change=@(args => InvokeOnChangeMethod(RecordId)) Value="SelectedIdList.Contains(_record.HierarchicalStructure.Id)" />
+}
+<RadzenFieldset AllowCollapse="true" Collapsed="false" class="nn-hierarchical-structure-tree" Style="margin-top: -29px; margin-bottom:10px;">
+    <HeaderTemplate>
+        <span>
+            <span class="nn-hierarchical-structure-tree-type-name">[ @(_record.HierarchyComponent.HierarchyComponentType.Name) ]</span>
+            &nbsp;&nbsp;&nbsp;
+            <span class="nn-hierarchical-structure-tree-name">@(_record.HierarchyComponent.Name)</span>
+        </span>
+    </HeaderTemplate>
+    <ChildContent>
+        <br />
+        @foreach (var iRecord in RecordList.Where(x => x.HierarchicalStructure.ParentHierarchicalStructureId == RecordId))
+        {
+            <HierarchicalStructureTreeSelect RecordId="iRecord.HierarchicalStructure.Id" RecordList="RecordList" HierarchyComponentTypeList="HierarchyComponentTypeList" SelectedIdList="SelectedIdList" OnChangeEventCallback="OnChangeEventCallback"></HierarchicalStructureTreeSelect>
+        }
+    </ChildContent>
+</RadzenFieldset>
+
+@code {
+
+    [Parameter]
+    public int RecordId { get; set; }
+
+    [Parameter]
+    public List<MdHierarchicalStructureTree> RecordList { get; set; }
+
+    [Parameter]
+    public List<HierarchyComponentType> HierarchyComponentTypeList { get; set; }
+
+    [Parameter]
+    public List<int> SelectedIdList { get; set; }
+
+    [Parameter] public EventCallback<int> OnChangeEventCallback { get; set; }
+
+    private async Task InvokeOnChangeMethod(int recordId)
+    {
+        await OnChangeEventCallback.InvokeAsync(recordId);
+    }
+
+    private MdHierarchicalStructureTree _record;
+
+    protected override void OnInitialized()
+    {
+        _record = RecordList.Where(x => x.HierarchicalStructure.Id == RecordId).First();
+    }
+
+
+}

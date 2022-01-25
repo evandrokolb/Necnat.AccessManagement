@@ -1,0 +1,30 @@
+﻿@page "/"
+
+@inject IStringLocalizer<Index> Localizer
+@inject INecnatSessionService Session
+
+<div class="row">
+    <div class="col-12 nn-page-title nn-pt1 text-center">@Localizer["Welcome to Necnat Access Management!"]</div>
+</div>
+<br />
+<div class="row">
+    <div class="col-12 text-center">
+        <img class="img-fluid" src="../img/logo.png" alt="Necnat">
+    </div>
+    <div class="col-12 text-center">
+        @_userAuthorization
+    </div>
+</div>
+
+@code {
+
+    private string _userAuthorization;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _userAuthorization = JsonConvert.SerializeObject(await Session.GetUserAuthorizationAsync());
+
+        StateHasChanged();
+    }
+
+}

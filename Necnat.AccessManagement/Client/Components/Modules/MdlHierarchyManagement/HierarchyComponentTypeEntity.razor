@@ -1,0 +1,98 @@
+﻿@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<HierarchyComponentTypeLocalizer> HierarchyComponentTypeLocalizer
+
+@inject StringValidator StringValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <div class="row">
+        <div class="col-md-10">
+            <RadzenLabel class="nn-label" Text="@HierarchyComponentTypeLocalizer["Name"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="Entity.Name" @oninput="@(async args => await ValidateNameAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrName.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrName.Message
+                </div>
+            }
+        </div>
+        <div class="col-md-2">
+            <RadzenLabel class="nn-label" Text="@HierarchyComponentTypeLocalizer["IsActive"]" />
+            <RadzenCheckBox class="nn-checkbox" @bind-Value="Entity.IsActive" Disabled="@AllDisabled" />
+        </div>
+    </div>
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public HierarchyComponentType Entity { get; set; }
+
+    [Parameter]
+    public EventCallback<HierarchyComponentType> EntityChanged { get; set; }
+
+    [Parameter]
+    public bool AllDisabled { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = false;
+        StateHasChanged();
+
+        await OnValidatorInitializedAsync();
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateNameAsync(Entity.Name);
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrName.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrName = new MdValidatorResult();
+    async Task ValidateNameAsync(string name)
+    {
+        var field = HierarchyComponentTypeLocalizer["Name"];
+        vrName.IsValid = true;
+
+        if (vrName.IsValid)
+            vrName = StringValidator.FromDataAnnotation(name, field, typeof(HierarchyComponentType), "Name");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+}

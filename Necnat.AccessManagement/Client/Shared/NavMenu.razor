@@ -1,0 +1,43 @@
+﻿@using Necnat.Client.Components.Modules.MdlAccessManagement
+
+<div class="top-row pl-4 navbar navbar-light">
+    <a class="navbar-brand" href="">
+        <img class="navbar-brand-img img-fluid" src="../img/logo_horizontal.jpg" alt="Necnat Access Management">
+    </a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <AuthorizeView>
+        <Authorized>
+            <SignOut />
+        </Authorized>
+        <NotAuthorized>
+            <SignIn />
+        </NotAuthorized>
+    </AuthorizeView>
+    <hr />
+    <ul class="nav flex-column">
+        <AuthorizeView>
+            <Authorized>
+                <NavMenuAuthorized CollapseNavMenu="collapseNavMenu" />
+            </Authorized>
+        </AuthorizeView>
+    </ul>
+    <footer>
+        <CultureSelector />
+    </footer>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

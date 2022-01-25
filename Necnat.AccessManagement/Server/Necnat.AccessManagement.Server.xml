@@ -1,0 +1,643 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Necnat.AccessManagement.Server</name>
+    </assembly>
+    <members>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.AInsert(System.String,Necnat.Shared.Entities.Role)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.AUpdate(System.String,Necnat.Shared.Entities.Role)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdRoleFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleController.AFilterSupport(System.String,System.String,System.String,Necnat.Shared.Filters.MdRoleFilter)">
+            <summary>
+            Obtains all minimal information of the allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleFeatureController.AInsert(System.String,Necnat.Shared.Entities.RoleFeature)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessConfiguration.RoleFeatureController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.SecurityController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.SecurityController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.SecurityController.AInsert(System.String,Necnat.Shared.Entities.Security)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.SecurityController.AUpdate(System.String,Necnat.Shared.Entities.Security)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.SecurityController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param> 
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.SecurityController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdSecurityFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.UserController.GetAll(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.UserController.GetById(System.String,System.String)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlAccessManagement.UserController.Filter(System.String,System.String,System.String,Necnat.Shared.Filters.MdUserFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.ASearchByControllerId(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that ControllerId, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="controllerId">Controller identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.AInsert(System.String,Necnat.Shared.Entities.Api)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.AUpdate(System.String,Necnat.Shared.Entities.Api)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApiController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdApiFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.AGetAll(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.InsertAndAddToHierarchyApplications(System.String,Necnat.Shared.Entities.Application)">
+            <summary>
+            Insert the entity and add her to Hierarchy of Applications.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.AUpdate(System.String,Necnat.Shared.Entities.Application)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.ADeleteAndRemoveFromHierarchicalStructure(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id and delete all corresponding records from hierarchies, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdApplicationFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationController.AFilterSupport(System.String,System.String,System.String,Necnat.Shared.Filters.MdApplicationFilter)">
+            <summary>
+            Obtains all minimal information of the allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationHierarchyController.AInsert(System.String,Necnat.Shared.Entities.ApplicationHierarchy)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ApplicationHierarchyController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.AInsert(System.String,Necnat.Shared.Entities.Controller)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.AUpdate(System.String,Necnat.Shared.Entities.Controller)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdControllerFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ControllerController.AFilterSupport(System.String,System.String,System.String,Necnat.Shared.Filters.MdControllerFilter)">
+            <summary>
+            Obtains all minimal information of the allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureApiController.AInsert(System.String,Necnat.Shared.Entities.FeatureApi)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureApiController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureController.AInsert(System.String,Necnat.Shared.Entities.Feature)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureController.AUpdate(System.String,Necnat.Shared.Entities.Feature)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.FeatureController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdFeatureFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.AInsert(System.String,Necnat.Shared.Entities.Module)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.AUpdate(System.String,Necnat.Shared.Entities.Module)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdModuleFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.ModuleController.AFilterSupport(System.String,System.String,System.String,Necnat.Shared.Filters.MdModuleFilter)">
+            <summary>
+            Obtains all minimal information of the allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.AList(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.AGetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.InsertAndAddToHierarchyHierarchies(System.String,Necnat.Shared.Entities.Hierarchy)">
+            <summary>
+            Insert the entity and add her to Hierarchy of Hierarchies.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.AUpdate(System.String,Necnat.Shared.Entities.Hierarchy)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.ADeleteAndRemoveFromHierarchicalStructure(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.AFilter(System.String,System.String,System.String,Necnat.Shared.Filters.MdHierarchyFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlDevelopment.HierarchyController.AFilterSupport(System.String,System.String,System.String,Necnat.Shared.Filters.MdHierarchyFilter)">
+            <summary>
+            Obtains all minimal information of the allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchicalStructureController.SearchHierarchyForTree(System.String)">
+            <summary>
+            Obtains all minimal information of the allowed records from hierarchies of hierarchical structure, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">A list of records from that entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchicalStructureController.SearchTree(System.String,Necnat.Shared.Models.MdSearchTree)">
+            <summary>
+            Obtains all records of the entity with that hierarchyId in a custom model, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entry Model.</param>
+            <response code="200">A list of records from that entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchicalStructureController.SearchTreeById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchicalStructureController.ASearchHierarchyComponentByHierarchyId(System.String,System.Int32)">
+            <summary>
+            Obtains all allowed Hierarchy Components of the entity with that hierarchyId, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="hierarchyId">Hierarchy identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchicalStructureController.AInsert(System.String,Necnat.Shared.Entities.HierarchicalStructure)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchicalStructureController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyComponentTypeController.List(System.String)">
+            <summary>
+            Obtains all allowed records from that entity.
+            </summary>
+            <param name="culture">Response language.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyComponentTypeController.GetById(System.String,System.Int32)">
+            <summary>
+            Obtains the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">One record from the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyComponentTypeController.Insert(System.String,Necnat.Shared.Entities.HierarchyComponentType)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyComponentTypeController.Update(System.String,Necnat.Shared.Entities.HierarchyComponentType)">
+            <summary>
+            Update the record of the corresponding entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyComponentTypeController.Delete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyComponentTypeController.Filter(System.String,System.String,System.String,Necnat.Shared.Filters.MdHierarchyComponentTypeFilter)">
+            <summary>
+            Obtains all allowed records from that entity, corresponding to the filter.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="moduleCodeName">Module code name.</param>
+            <param name="featureCodeName">Feature code name.</param>
+            <param name="md">Filter parameters.</param>
+            <response code="200">Collection of the entity.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyHierarchyComponentTypeController.AInsert(System.String,Necnat.Shared.Entities.HierarchyHierarchyComponentType)">
+            <summary>
+            Insert the entity, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="e">Entity.</param>
+            <response code="200">A success message.</response>
+        </member>
+        <member name="M:Necnat.AccessManagement.Server.v1.Modules.MdlHierarchyManagement.HierarchyHierarchyComponentTypeController.ADelete(System.String,System.Int32)">
+            <summary>
+            Delete the record of the entity with that id, if allowed.
+            </summary>
+            <param name="culture">Response language.</param>
+            <param name="id">Entity identifier.</param>
+            <response code="200">A success message.</response>
+        </member>
+    </members>
+</doc>

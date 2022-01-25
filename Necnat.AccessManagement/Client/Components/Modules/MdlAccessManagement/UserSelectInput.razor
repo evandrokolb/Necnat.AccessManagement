@@ -1,0 +1,170 @@
+﻿@using Necnat.Shared.Filters
+
+@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<UserLocalizer> UserLocalizer
+@inject INecnatSwalService SwalService
+
+@inject SweetAlertService Swal
+@inject DialogService Dialog
+@inject NamHttpClient AppHttpClient
+
+<div class="row">
+    <div class="col-md-12">
+        <RadzenTextBox Style="width: calc(100% - 110px);" @bind-Value="SelectedRecord.Name" @onfocusout="@SearchByNameAsync" Disabled="@disabled" />
+        <button type='button' class='btn float-right nn-mini-button nn-line-button nn-button-secondary nn-button-mini-clear' @onclick="@(async () => await ClearAsync())"><i class="fas fa-broom"></i></button>
+        <button type='button' class='btn float-right nn-mini-button nn-line-button nn-button-primary nn-button-mini-search' @onclick="@ModalSearch" disabled="@(!string.IsNullOrWhiteSpace(SelectedRecord.Name))"><i class="fas fa-search"></i></button>
+        @if (!string.IsNullOrWhiteSpace(vrSearch.Message))
+        {
+            <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                @vrSearch.Message
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public MdUser SelectedRecord { get; set; }
+
+    [Parameter]
+    public EventCallback<MdUser> SelectedRecordChanged { get; set; }
+
+    [Parameter]
+    public string SelectedRecordId { get; set; }
+
+    [Parameter]
+    public EventCallback<string> SelectedRecordIdChanged { get; set; }
+
+    bool disabled;
+    MdValidatorResult vrSearch;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dialog.OnClose += CloseModalSearch;
+
+        disabled = false;
+        vrSearch = new MdValidatorResult();
+
+        if (SelectedRecord != null)
+            SelectedRecordId = SelectedRecord.Id;
+
+        if (!string.IsNullOrWhiteSpace(SelectedRecordId))
+            await SearchByIdAsync();
+        else
+            await ClearAsync();
+    }
+
+    async Task ClearAsync(bool clearVr = true)
+    {
+        SelectedRecord = new MdUser();
+        await SelectedRecordChanged.InvokeAsync(SelectedRecord);
+
+        SelectedRecordId = string.Empty;
+        await SelectedRecordIdChanged.InvokeAsync(SelectedRecordId);
+
+        disabled = false;
+        if (clearVr)
+            vrSearch = new MdValidatorResult();
+    }
+
+    string searchUser = "SearchUser";
+
+    void ModalSearch()
+    {
+        Dialog.Open<UserSelectModal>("", new Dictionary<string, object>() {
+                { "DialogName", searchUser },
+                { "IsMultipleSelection", false } },
+                RadzenConstants.DIALOG_OPTIONS);
+    }
+
+    async void CloseModalSearch(dynamic result)
+    {
+        if (result == null || ((MdDialogResult)result).DialogName != searchUser)
+            return;
+
+        MdUser user = result.Data;
+
+        await SearchResultAsync(new List<MdUser> { user });
+    }
+
+    async Task SearchByNameAsync()
+    {
+        if (disabled || string.IsNullOrWhiteSpace(SelectedRecord.Name))
+            return;
+
+        var fo = new MdFilterObject();
+        var filter = new MdUserFilter { NameFilter = SelectedRecord.Name };
+
+        var r = await AppHttpClient.AccessManagementUserFilter(NamFeatureConstants.ModuleAccessManagement, NamFeatureConstants.FeatureAccessManagementUserRead, filter);
+        if (r.IsSuccessStatusCode)
+        {
+            fo = JsonConvert.DeserializeObject<MdFilterObject>(await r.Content.ReadAsStringAsync());
+        }
+        else
+        {
+            fo.Data = new List<MdUser>();
+
+            if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+            else
+                await Swal.FireAsync(SwalService.ErrorGeneric());
+        }
+
+        await SearchResultAsync((List<MdUser>)fo.Data);
+    }
+
+    async Task SearchByIdAsync()
+    {
+        if (disabled || string.IsNullOrWhiteSpace(SelectedRecordId))
+            return;
+
+        MdUser user = null;
+
+        var r = await AppHttpClient.AccessManagementUserGetById(SelectedRecordId);
+        if (r.IsSuccessStatusCode)
+        {
+            user = JsonConvert.DeserializeObject<MdUser>(await r.Content.ReadAsStringAsync());
+
+            await SearchResultAsync(new List<MdUser> { user });
+        }
+        else
+        {
+            if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+            else
+                await Swal.FireAsync(SwalService.ErrorGeneric());
+
+            await SearchResultAsync(new List<MdUser>());
+        }
+    }
+
+    async Task SearchResultAsync(List<MdUser> l)
+    {
+        vrSearch.IsValid = l.Count == 1;
+
+        if (l.Count == 1)
+            vrSearch.Message = string.Empty;
+        else if (l.Count > 1)
+            vrSearch.Message = CommonLocalizer["The search returned more than one record."];
+        else
+            vrSearch.Message = CommonLocalizer["The search didn't not return any records."];
+
+        if (vrSearch.IsValid)
+        {
+            SelectedRecord = l.First();
+            await SelectedRecordChanged.InvokeAsync(SelectedRecord);
+
+            SelectedRecordId = SelectedRecord.Id;
+            await SelectedRecordIdChanged.InvokeAsync(SelectedRecordId);
+
+            disabled = true;
+
+            StateHasChanged();
+        }
+        else
+            await ClearAsync(false);
+    }
+
+}

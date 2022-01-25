@@ -1,0 +1,17 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Necnat.AccessManagement/Client/bin/Debug/net5.0
+/Necnat.AccessManagement/Client/obj
+/Necnat.AccessManagement/Server/bin/Debug/net5.0
+/Necnat.AccessManagement/Server/obj
+/Necnat.AccessManagement/Shared/obj/Debug/net5.0
+/Necnat.AccessManagement/Shared/obj
+/Necnat.Client/bin/Debug/net5.0
+/Necnat.Client/obj
+/Necnat.Server/bin/Debug/net5.0
+/Necnat.Server/obj
+/Necnat.Shared/bin/Debug/netstandard2.1
+/Necnat.Shared/obj

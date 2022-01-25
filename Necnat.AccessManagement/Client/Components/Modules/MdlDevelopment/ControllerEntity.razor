@@ -1,0 +1,202 @@
+﻿@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<ModuleLocalizer> ModuleLocalizer
+@inject IStringLocalizer<ControllerLocalizer> ControllerLocalizer
+
+@inject NamHttpClient AppHttpClient
+@inject StringValidator StringValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <div class="row">
+        @if (Entity.Module != null)
+        {
+            <div class="col-md-4">
+                <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Application"]" />
+                <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Data="@ApplicationList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.Module.ApplicationId" Change="@ChangeApplicationId" Disabled="@AllDisabled" />
+            </div>
+        }
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@ModuleLocalizer["Module"]" />
+            <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Data="@filteredModuleList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.ModuleId" Disabled="@AllDisabled" />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-10">
+            <RadzenLabel class="nn-label" Text="@ControllerLocalizer["Name"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="Entity.Name" @oninput="@(async args => await ValidateNameAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrName.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrName.Message
+                </div>
+            }
+        </div>
+        <div class="col-md-2">
+            <RadzenLabel class="nn-label" Text="@ControllerLocalizer["IsActive"]" />
+            <RadzenCheckBox class="nn-checkbox" @bind-Value="Entity.IsActive" Disabled="@AllDisabled" />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenLabel class="nn-label" Text="@ControllerLocalizer["Description"]" />
+            <RadzenTextArea class="nn-input" @bind-Value="Entity.Description" @oninput="@(async args => await ValidateDescriptionAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrDescription.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrDescription.Message
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public Controller Entity { get; set; }
+
+    [Parameter]
+    public EventCallback<Controller> EntityChanged { get; set; }
+
+    [Parameter]
+    public bool AllDisabled { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+
+        await OnValidatorInitializedAsync();
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateNameAsync(Entity.Name);
+        await ValidateDescriptionAsync(Entity.Description);
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrName.IsValid;
+        valid = valid && vrDescription.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrName = new MdValidatorResult();
+    async Task ValidateNameAsync(string name)
+    {
+        var field = ControllerLocalizer["Name"];
+        vrName.IsValid = true;
+
+        if (vrName.IsValid)
+            vrName = StringValidator.FromDataAnnotation(name, field, typeof(Controller), "Name");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrDescription = new MdValidatorResult();
+    async Task ValidateDescriptionAsync(string description)
+    {
+        var field = ControllerLocalizer["Description"];
+        vrDescription.IsValid = true;
+
+        if (vrDescription.IsValid)
+            vrDescription = StringValidator.FromDataAnnotation(description, field, typeof(Controller), "Description");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Support
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; }
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; }
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+
+    [Parameter]
+    public List<Module> ModuleList { get; set; }
+    List<Module> filteredModuleList { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ModuleList == null)
+        {
+            ModuleList = await ResponseUtil.DataOfFilterObject<List<Module>>(await AppHttpClient.DevelopmentModuleAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ModuleList = ModuleList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (Entity.ModuleId != 0)
+        {
+            Entity.Module.ApplicationId = ModuleList.Where(x => x.Id == Entity.ModuleId).First().ApplicationId;
+            filteredModuleList = ModuleList.Where(x => x.ApplicationId == Entity.Module.ApplicationId).OrderBy(x => x.Id).ToList();
+        }
+        else if (Entity.Module.ApplicationId != 0)
+        {
+            ChangeApplicationId();
+        }
+        else
+        {
+            Entity.Module.ApplicationId = ApplicationList.First().Id;
+            ChangeApplicationId();
+        }
+    }
+
+    void ChangeApplicationId()
+    {
+        filteredModuleList = ModuleList.Where(x => x.ApplicationId == Entity.Module.ApplicationId).OrderBy(x => x.Id).ToList();
+        Entity.ModuleId = filteredModuleList.First().Id;
+
+        StateHasChanged();
+    }
+
+    #endregion
+}

@@ -1,0 +1,277 @@
+﻿@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+@inject IStringLocalizer<ModuleLocalizer> ModuleLocalizer
+@inject IStringLocalizer<ControllerLocalizer> ControllerLocalizer
+@inject IStringLocalizer<ApiLocalizer> ApiLocalizer
+
+@inject NamHttpClient AppHttpClient
+@inject StringValidator StringValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+    <div class="row">
+        @if (Entity.Controller != null && Entity.Controller.Module != null)
+        {
+            <div class="col-md-4">
+                <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Application"]" />
+                <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Data="@ApplicationList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.Controller.Module.ApplicationId" Change="@ChangeApplicationId" Disabled="@AllDisabled" />
+            </div>
+        }
+        @if (Entity.Controller != null)
+        {
+            <div class="col-md-4">
+                <RadzenLabel class="nn-label" Text="@ModuleLocalizer["Module"]" />
+                <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                                Data="@filteredModuleList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.Controller.ModuleId" Change="@ChangeModuleId" Disabled="@AllDisabled" />
+            </div>
+        }
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@ControllerLocalizer["Controller"]" />
+            <RadzenDropDown class="nn-input" AllowClear="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" AllowFiltering="true"
+                            Data="@filteredControllerList" ValueProperty="Id" TextProperty="Name" @bind-Value="Entity.ControllerId" Disabled="@AllDisabled" />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-10">
+            <RadzenLabel class="nn-label" Text="@ApiLocalizer["Name"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="Entity.Name" @oninput="@(async args => await ValidateNameAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrName.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrName.Message
+                </div>
+            }
+        </div>
+        <div class="col-md-2">
+            <RadzenLabel class="nn-label" Text="@ApiLocalizer["IsActive"]" />
+            <RadzenCheckBox class="nn-checkbox" @bind-Value="Entity.IsActive" Disabled="@AllDisabled" />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@ApiLocalizer["HttpMethodId"]" />
+            <RadzenDropDown class="nn-input" AllowClear="false" TValue="int" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true"
+                            Data=@HttpMethodDomain.GetAll() @bind-Value='@Entity.HttpMethodId' ValueProperty="Id" TextProperty="Name" Disabled="@AllDisabled" />
+        </div>
+        <div class="col-md-4">
+            <RadzenLabel class="nn-label" Text="@ApiLocalizer["Version"]" />
+            <RadzenTextBox class="nn-input" @bind-Value="Entity.Version" @oninput="@(async args => await ValidateVersionAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrVersion.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrVersion.Message
+                </div>
+            }
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenLabel class="nn-label" Text="@ApiLocalizer["Description"]" />
+            <RadzenTextArea class="nn-input" @bind-Value="Entity.Description" @oninput="@(async args => await ValidateDescriptionAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrDescription.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrDescription.Message
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public Api Entity { get; set; }
+
+    [Parameter]
+    public EventCallback<Api> EntityChanged { get; set; }
+
+    [Parameter]
+    public bool AllDisabled { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnInitializedSupportAsync();
+
+        isLoading = false;
+        StateHasChanged();
+
+        await OnValidatorInitializedAsync();
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateNameAsync(Entity.Name);
+        await ValidateVersionAsync(Entity.Version);
+        await ValidateDescriptionAsync(Entity.Description);
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrName.IsValid;
+        valid = valid && vrVersion.IsValid;
+        valid = valid && vrDescription.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrName = new MdValidatorResult();
+    async Task ValidateNameAsync(string name)
+    {
+        var field = ApiLocalizer["Name"];
+        vrName.IsValid = true;
+
+        if (vrName.IsValid)
+            vrName = StringValidator.FromDataAnnotation(name, field, typeof(Api), "Name");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrVersion = new MdValidatorResult();
+    async Task ValidateVersionAsync(string version)
+    {
+        var field = ApiLocalizer["Version"];
+        vrVersion.IsValid = true;
+
+        if (vrVersion.IsValid)
+            vrVersion = StringValidator.FromDataAnnotation(version, field, typeof(Api), "Version");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrDescription = new MdValidatorResult();
+    async Task ValidateDescriptionAsync(string description)
+    {
+        var field = ApiLocalizer["Description"];
+        vrDescription.IsValid = true;
+
+        if (vrDescription.IsValid)
+            vrDescription = StringValidator.FromDataAnnotation(description, field, typeof(Api), "Description");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Support
+
+    [Parameter]
+    public string SupportModuleCodeName { get; set; }
+
+    [Parameter]
+    public string SupportFeatureCodeName { get; set; }
+
+    [Parameter]
+    public List<Application> ApplicationList { get; set; }
+
+    [Parameter]
+    public List<Module> ModuleList { get; set; }
+    List<Module> filteredModuleList { get; set; }
+
+    [Parameter]
+    public List<Controller> ControllerList { get; set; }
+    List<Controller> filteredControllerList { get; set; }
+
+    async Task OnInitializedSupportAsync()
+    {
+        if (Entity.HttpMethodId == 0)
+        {
+            Entity.HttpMethodId = 1;
+        }
+
+        if (ApplicationList == null)
+        {
+            ApplicationList = await ResponseUtil.DataOfFilterObject<List<Application>>(await AppHttpClient.DevelopmentApplicationAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ApplicationList = ApplicationList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ModuleList == null)
+        {
+            ModuleList = await ResponseUtil.DataOfFilterObject<List<Module>>(await AppHttpClient.DevelopmentModuleAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ModuleList = ModuleList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (ControllerList == null)
+        {
+            ControllerList = await ResponseUtil.DataOfFilterObject<List<Controller>>(await AppHttpClient.DevelopmentControllerAFilterSupport(SupportModuleCodeName, SupportFeatureCodeName));
+            ControllerList = ControllerList.OrderBy(x => x.Name).ToList();
+        }
+
+        if (Entity.ControllerId != 0)
+        {
+            Entity.Controller.ModuleId = ControllerList.Where(x => x.Id == Entity.ControllerId).First().ModuleId;
+            filteredControllerList = ControllerList.Where(x => x.ModuleId == Entity.Controller.ModuleId).OrderBy(x => x.Id).ToList();
+
+            Entity.Controller.Module.ApplicationId = ModuleList.Where(x => x.Id == Entity.Controller.ModuleId).First().ApplicationId;
+            filteredModuleList = ModuleList.Where(x => x.ApplicationId == Entity.Controller.Module.ApplicationId).OrderBy(x => x.Id).ToList();
+        }
+        else if (Entity.Controller.ModuleId != 0)
+        {
+            Entity.Controller.Module.ApplicationId = ModuleList.Where(x => x.Id == Entity.Controller.ModuleId).First().ApplicationId;
+            filteredModuleList = ModuleList.Where(x => x.ApplicationId == Entity.Controller.Module.ApplicationId).OrderBy(x => x.Id).ToList();
+
+            ChangeModuleId();
+        }
+        else if (Entity.Controller.Module.ApplicationId != 0)
+        {
+            ChangeApplicationId();
+        }
+        else
+        {
+            Entity.Controller.Module.ApplicationId = ApplicationList.First().Id;
+            ChangeApplicationId();
+        }
+    }
+
+    void ChangeModuleId()
+    {
+        filteredControllerList = ControllerList.Where(x => x.ModuleId == Entity.Controller.ModuleId).OrderBy(x => x.Id).ToList();
+        Entity.ControllerId = filteredControllerList.First().Id;
+
+        StateHasChanged();
+    }
+
+    void ChangeApplicationId()
+    {
+        filteredModuleList = ModuleList.Where(x => x.ApplicationId == Entity.Controller.Module.ApplicationId).OrderBy(x => x.Id).ToList();
+        Entity.Controller.ModuleId = filteredModuleList.First().Id;
+
+        ChangeModuleId();
+    }
+
+    #endregion
+}

@@ -1,0 +1,151 @@
+﻿@using Necnat.Shared.Validators
+@using Radzen.Blazor
+
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<ApplicationLocalizer> ApplicationLocalizer
+
+@inject StringValidator StringValidator
+
+@if (isLoading)
+{
+    <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+}
+else
+{
+<div class="row">
+    <div class="col-md-3">
+        <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Acronym"]" />
+        <RadzenTextBox class="nn-input" @bind-Value="Entity.Acronym" @oninput="@(async args => await ValidateAcronymAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+        @if (!string.IsNullOrWhiteSpace(vrAcronym.Message))
+        {
+            <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                @vrAcronym.Message
+            </div>
+        }
+    </div>
+    <div class="col-md-7">
+        <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Name"]" />
+        <RadzenTextBox class="nn-input" @bind-Value="Entity.Name" @oninput="@(async args => await ValidateNameAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+        @if (!string.IsNullOrWhiteSpace(vrName.Message))
+        {
+            <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                @vrName.Message
+            </div>
+        }
+    </div>
+    <div class="col-md-2">
+        <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["IsActive"]" />
+        <RadzenCheckBox class="nn-checkbox" @bind-Value="Entity.IsActive" Disabled="@AllDisabled" />
+    </div>
+</div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <RadzenLabel class="nn-label" Text="@ApplicationLocalizer["Description"]" />
+            <RadzenTextArea class="nn-input" @bind-Value="Entity.Description" @oninput="@(async args => await ValidateDescriptionAsync(args.Value.ToString()))" Disabled="@AllDisabled" />
+            @if (!string.IsNullOrWhiteSpace(vrDescription.Message))
+            {
+                <div class="text-danger field-validation-error nn-validate nn-validate-error">
+                    @vrDescription.Message
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+
+    //Parameters
+
+    [Parameter]
+    public Application Entity { get; set; }
+
+    [Parameter]
+    public EventCallback<Application> EntityChanged { get; set; }
+
+    [Parameter]
+    public bool AllDisabled { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = false;
+        StateHasChanged();
+
+        await OnValidatorInitializedAsync();
+    }
+
+    #region Validator
+
+    [Parameter]
+    public bool IsValidEntity { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsValidEntityChanged { get; set; }
+
+    async Task OnValidatorInitializedAsync()
+    {
+        await ValidateAcronymAsync(Entity.Acronym);
+        await ValidateNameAsync(Entity.Name);
+        await ValidateDescriptionAsync(Entity.Description);
+    }
+
+    async Task ValidateEntityAsync()
+    {
+        var valid = true;
+
+        valid = valid && vrAcronym.IsValid;
+        valid = valid && vrName.IsValid;
+        valid = valid && vrDescription.IsValid;
+
+        if (IsValidEntity != valid)
+        {
+            IsValidEntity = valid;
+            await IsValidEntityChanged.InvokeAsync(IsValidEntity);
+        }
+    }
+
+    private MdValidatorResult vrAcronym = new MdValidatorResult();
+    async Task ValidateAcronymAsync(string acronym)
+    {
+        var field = ApplicationLocalizer["Acronym"];
+        vrAcronym.IsValid = true;
+
+        if (vrAcronym.IsValid)
+            vrAcronym = StringValidator.FromDataAnnotation(acronym, field, typeof(Application), "Acronym");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrName = new MdValidatorResult();
+    async Task ValidateNameAsync(string name)
+    {
+        var field = ApplicationLocalizer["Name"];
+        vrName.IsValid = true;
+
+        if (vrName.IsValid)
+            vrName = StringValidator.FromDataAnnotation(name, field, typeof(Application), "Name");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    private MdValidatorResult vrDescription = new MdValidatorResult();
+    async Task ValidateDescriptionAsync(string description)
+    {
+        var field = ApplicationLocalizer["Description"];
+        vrDescription.IsValid = true;
+
+        if (vrDescription.IsValid)
+            vrDescription = StringValidator.FromDataAnnotation(description, field, typeof(Application), "Description");
+
+        await ValidateEntityAsync();
+        StateHasChanged();
+    }
+
+    #endregion
+}

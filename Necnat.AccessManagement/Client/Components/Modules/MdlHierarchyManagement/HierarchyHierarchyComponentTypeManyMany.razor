@@ -1,0 +1,195 @@
+﻿@inject IConfiguration Configuration
+@inject IStringLocalizer<CommonLocalizer> CommonLocalizer
+@inject IStringLocalizer<HierarchyLocalizer> HierarchyLocalizer
+@inject IStringLocalizer<HierarchyComponentTypeLocalizer> HierarchyComponentTypeLocalizer
+@inject INecnatSessionService Session
+@inject INecnatSwalService SwalService
+
+@inject NavigationManager Navigation
+@inject DialogService Dialog
+@inject SweetAlertService Swal
+@inject NamHttpClient AppHttpClient
+
+@if (hasPermissionRead)
+{
+    @if (isLoading == true)
+    {
+        <img class="nn-loading nn-loading-center" src="../img/loading.gif" alt="@CommonLocalizer["Loading..."]" />
+    }
+    else
+    {
+        <RadzenPanel class="nn-filter" AllowCollapse="true">
+            <HeaderTemplate>
+                <span>
+                    <i class="fas fa-link"></i><span class="nn-filter-header">@HierarchyComponentTypeLocalizer["HierarchyComponentTypes"]</span>
+                </span>
+            </HeaderTemplate>
+            <ChildContent>
+                <hr />
+                <RadzenDataGrid class="nn-data-grid" AllowColumnResize="true" AllowSorting="true" AllowPaging="true" EmptyText="@CommonLocalizer["No records to display."]"
+                                AllowFiltering="true" FilterMode="FilterMode.Advanced" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                PageSize="PageSize" IsLoading="@(recordList == null)" TItem="HierarchyHierarchyComponentType" Data="@recordList">
+                    <Columns>
+                        <RadzenDataGridColumn CssClass="nn-column" TItem="HierarchyHierarchyComponentType" Property="HierarchyComponentType.Name" Title="@HierarchyComponentTypeLocalizer["Name"]" />
+                        <RadzenDataGridColumn CssClass="nn-column" TItem="HierarchyHierarchyComponentType" Property="HierarchyComponentType.IsActive" Title="@HierarchyComponentTypeLocalizer["IsActive"]">
+                            <Template Context="data">
+                                <RadzenCheckBox class="nn-checkbox" @bind-Value="data.HierarchyComponentType.IsActive" Disabled="true" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        @if (AllowDelete && hasPermissionDelete)
+                        {
+                            <RadzenDataGridColumn TItem="HierarchyHierarchyComponentType" Title="Ação">
+                                <Template Context="data">
+                                    <button type='button' class="btn nn-button-action nn-button-delete" @onclick="async () => await ConfirmDeleteHierarchyHierarchyComponentTypeAsync(data.Id)" data-toggle="tooltip" title="@CommonLocalizer["Delete"]"><i class="fas fa-trash-alt"></i></button>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        }
+                    </Columns>
+                </RadzenDataGrid>
+                <br />
+                @if (AllowInsert && hasPermissionInsert)
+                {
+                    <button type='button' class="btn float-right nn-button nn-button-primary nn-button-new" @onclick="@InsertHierarchyHierarchyComponentType"><i class="fas fa-plus-circle nn-button-icon"></i> @CommonLocalizer["Add"]</button>
+                }
+            </ChildContent>
+        </RadzenPanel>
+    }
+}
+
+@code {
+
+    //DataGrid Parameters
+
+    [Parameter]
+    public int PageSize { get; set; } = 5;
+
+    //Parameters
+
+    [Parameter]
+    public int HierarchyId { get; set; }
+
+    //Code
+
+    bool isLoading = true;
+    List<HierarchyHierarchyComponentType> recordList;
+
+    //Permission
+
+    [Parameter]
+    public bool AllowInsert { get; set; }
+
+    [Parameter]
+    public bool AllowDelete { get; set; }
+
+    private MdUserAuthorizationReduced userAuthorization = null;
+    private bool hasPermissionInsert = false;
+    private bool hasPermissionRead = false;
+    private bool hasPermissionDelete = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dialog.OnClose += CloseInsertHierarchyHierarchyComponentType;
+
+        userAuthorization = await Session.GetUserAuthorizationAsync();
+        if (userAuthorization == null)
+        {
+            Navigation.NavigateTo("/MdlAccessManagement/Logout?reason=NoUserAuthorization");
+            return;
+        }
+
+        hasPermissionRead = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyHierarchyComponentTypeRead, (int)NamHierarchyComponentTypeConstants.Hierarchy, HierarchyId);
+        hasPermissionInsert = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyHierarchyComponentTypeInsert, (int)NamHierarchyComponentTypeConstants.Hierarchy, HierarchyId);
+        hasPermissionDelete = Session.HasModuleFeature(userAuthorization, NamFeatureConstants.ModuleHierarchyManagement, NamFeatureConstants.FeatureHierarchyManagementHierarchyHierarchyComponentTypeDelete, (int)NamHierarchyComponentTypeConstants.Hierarchy, HierarchyId);
+
+        if (!hasPermissionRead)
+            return;
+
+        recordList = await (await AppHttpClient.HierarchyManagementHierarchyHierarchyComponentTypeASearchByHierarchyIdIncludeHierarchyComponentType(HierarchyId)).Content.ReadFromJsonAsync<List<HierarchyHierarchyComponentType>>();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    string insertHierarchyManagementHierarchyHierarchyComponentTypeByHierarchy = "InsertHierarchyManagementHierarchyHierarchyComponentTypeByHierarchy";
+
+    void InsertHierarchyHierarchyComponentType()
+    {
+        Dialog.Open<HierarchyComponentTypeSelectModal>("", new Dictionary<string, object>() {
+                { "DialogName", insertHierarchyManagementHierarchyHierarchyComponentTypeByHierarchy },
+                { "SupportModuleCodeName", NamFeatureConstants.ModuleHierarchyManagement },
+                { "SupportFeatureCodeName", NamFeatureConstants.FeatureHierarchyManagementHierarchyHierarchyComponentTypeInsert },
+                { "WithoutIdList", recordList.Select(x => x.HierarchyId).ToList() },
+                { "IsMultipleSelection", true } },
+            RadzenConstants.DIALOG_OPTIONS);
+    }
+
+    async void CloseInsertHierarchyHierarchyComponentType(dynamic result)
+    {
+        if (result == null || ((MdDialogResult)result).DialogName != insertHierarchyManagementHierarchyHierarchyComponentTypeByHierarchy)
+            return;
+
+        var isSuccessStatusCode = true;
+        string successMessage = string.Empty;
+        List<Api> dataList = result.Data;
+
+        foreach (var iData in dataList)
+        {
+            var e = new HierarchyHierarchyComponentType();
+            e.HierarchyId = HierarchyId;
+            e.HierarchyComponentTypeId = iData.Id;
+
+            var r = await AppHttpClient.HierarchyManagementHierarchyHierarchyComponentTypeAInsert(e);
+
+            isSuccessStatusCode = isSuccessStatusCode && r.IsSuccessStatusCode;
+            if (isSuccessStatusCode)
+                successMessage = await r.Content.ReadAsStringAsync();
+
+            if (!isSuccessStatusCode)
+            {
+                if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+                    await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+                else
+                    await Swal.FireAsync(SwalService.ErrorGeneric());
+            }
+
+            if (!isSuccessStatusCode)
+                break;
+        }
+
+        if (dataList.Count() > 0 && isSuccessStatusCode)
+            await Swal.FireAsync(SwalService.Success(successMessage));
+
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+    async Task ConfirmDeleteHierarchyHierarchyComponentTypeAsync(int id)
+    {
+        await Swal.FireAsync(SwalService.WarningConfirmAction(new PreConfirmCallback(async () => await DeleteHierarchyHierarchyComponentTypeAsync(id), this)))
+            .ContinueWith(async swalTask =>
+            {
+                SweetAlertResult result = await swalTask;
+                if (result.Dismiss == DismissReason.Cancel)
+                    await Swal.FireAsync(SwalService.WarningConfirmActionCanceled());
+            });
+    }
+
+    async Task<string> DeleteHierarchyHierarchyComponentTypeAsync(int id)
+    {
+        var result = "0";
+        var r = await AppHttpClient.HierarchyManagementHierarchyHierarchyComponentTypeADelete(id);
+
+        if (r.IsSuccessStatusCode)
+        {
+            await Swal.FireAsync(SwalService.Success(await r.Content.ReadAsStringAsync()));
+            result = "1";
+        }
+        else if (r.StatusCode == HttpStatusCode.Conflict || Configuration["ShowDetailedError"] == "True")
+            await Swal.FireAsync(SwalService.Error(await r.Content.ReadAsStringAsync()));
+        else
+            await Swal.FireAsync(SwalService.ErrorGeneric());
+
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        return result;
+    }
+
+}
